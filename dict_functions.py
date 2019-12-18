@@ -199,7 +199,7 @@ def ensmean_spcumsum(indict):
         outdict[k] = np.cumsum(ensemblemean,axis=0)
     return outdict
 
-def moving_average(indict, n=5):
+def moving_average(indict, n=10):
     # calculate 5-day moving average of dictionary of nps or dictorionary in dictionary of nps 
 
     # movign average op np array
@@ -461,7 +461,7 @@ def calc_areafrac_shp2rst_region(shp_path,outdir,outfilename,resolution,coord):
 
     # functions 
 
-def extract_weighted_lake_region(indir_lakedata,indict,extent, lake_pct_region):
+def extract_region(indir_lakedata,indict,extent):
     """ Extract lake region based on extent, input can be up to 2 level dictionary"""
     # cut out corresponding region of lakeheat 
     lon,lat = get_lonlat(indir_lakedata)
@@ -498,6 +498,15 @@ def load_lakeheat(scenario,outdir,flag_ref, years_analysis):
     anom_std     = moving_average(ens_std_ts(lakeheat_anom))
     del lakeheat_anom, lakeheat
     return (anom_ensmean, anom_ensmin, anom_ensmax, anom_std)
+
+
+def load_riverheat(outdir):
+    anom_ensmean = np.load(outdir+'riverheat/riverheat_ensmean.npy',allow_pickle='TRUE')
+    anom_ensmin = np.load(outdir+'riverheat/riverheat_ensmin.npy',allow_pickle='TRUE')
+    anom_ensmax = np.load(outdir+'riverheat/riverheat_ensmax.npy',allow_pickle='TRUE')
+    anom_std = np.load(outdir+'riverheat/riverheat_std.npy',allow_pickle='TRUE')
+    return (anom_ensmean, anom_ensmin, anom_ensmax, anom_std)
+
 
 def calc_reservoir_warming(outdir):
 

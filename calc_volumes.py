@@ -17,7 +17,7 @@ import xarray as xr
 
 # calculate volumes per layer for different timesteps (area)
 # based on relative layer depths and depth of GLDB
-def calc_volume_per_layer(flag_scenario, indir_lakedata, years_grand, start_year,end_year, resolution, models,outdir ):
+def calc_volume_per_layer(flag_scenario, indir_lakedata, years_grand, start_year,end_year, resolution, models,outdir):
 
     # GLDB lake depths (GLDB lake depths, hydrolakes lake area)
     lakedepth_path        = indir_lakedata + 'dlake_1km_ll_remapped_0.5x0.5.nc'
@@ -35,25 +35,22 @@ def calc_volume_per_layer(flag_scenario, indir_lakedata, years_grand, start_year
     lat = hydrolakes_lakepct.PCT_LAKE.lat
 
     # this should be removed when updating new reservoir file
-    # end_year_res = 2000
+    end_year_res = 2000
 
     # take analysis years of lake_pct
-    lake_pct  = lake_pct[years_grand.index(start_year):years_grand.index(end_year), :, :]
+    lake_pct  = lake_pct[years_grand.index(start_year):years_grand.index(end_year_res), :, :]
 
     # this should be removed when updating new reservoir file
     # extend lake_pct data set with values further than 2000: 
-    # lake_const=lake_pct[years_grand.index(end_year_res-1),:,:]
-    # lake_const = lake_const[np.newaxis,:,:]
-    # for ind,year in enumerate(np.arange(end_year_res,end_year)):
-    #     lake_pct= np.append(lake_pct,lake_const,axis=0)
+    lake_const=lake_pct[years_grand.index(end_year_res-1),:,:]
+    lake_const = lake_const[np.newaxis,:,:]
+    for ind,year in enumerate(np.arange(end_year_res,end_year)):
+        lake_pct= np.append(lake_pct,lake_const,axis=0)
 
 
     # calculate lake area per grid cell (m²)
     grid_area      = calc_grid_area(resolution)
     lake_area      = lake_pct * grid_area  
-
-    # calculate lake volume (assumption of bathtub -> other assumptions?)
-    lake_volume_tot = lake_area * lake_depth  # m³
 
     volume_per_layer = {}
     

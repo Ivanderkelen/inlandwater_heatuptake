@@ -7,14 +7,9 @@ Scripts for calculating river heat content based on river temperatures and river
 
 """
 # %%
-
-from cdo import Cdo
-cdo = Cdo()
 import os 
-import xarray as xr
-import numpy as np
+import sys
 
-# for windows, delete afterwards
 # settings for windows or linux machine (for paths)
 if os.name == 'nt': # working on windows
     sys.path.append(r'E:/scripts/python/utils')
@@ -26,14 +21,18 @@ else:
 
     from cdo import Cdo
     cdo = Cdo()
+
+from calc_grid_area   import calc_grid_area
 from dict_functions import *
 
 
 # %%
 # load river storages
 
-flag_preprocess=False
+flag_preprocess = False 
 
+flag_saveriverheat = True
+flag_saveriverheat_forAmazon = False
 # Reference to which period/year anomalies are calculated
 flag_ref = 'pre-industrial' # 'pre-industrial': first 30 years (1900-1929 for start_year =1900)
 
@@ -46,10 +45,9 @@ indir  =  basepath + 'data/ISIMIP/OutputData/water_global'
 outdir =  basepath + 'data/processed/isimip_lakeheat/riverheat/'
 plotdir=  basepath + '/data/processed/isimip_lakeheat/plots/'
 
-indir_lakedata = '/home/inne/documents/phd/data/isimip_laketemp/'
 
 
-models      = ['WaterGAP2']#,  'MATSIRO'    ]
+models      = ['WaterGAP2',  'MATSIRO'    ]
 scenarios   = ['histsoc_co2', '2005soc_co2'] # order need to be corresponding to models
 
 forcings    = ['gfdl-esm2m', 'hadgem2-es', 'ipsl-cm5a-lr', 'miroc5']
@@ -102,14 +100,14 @@ if flag_preprocess:
                         infile = model.lower()+'_'+forcing+'_'+'ewembi'+'_'+experiment_fn+'_'+scenario+'_'+variable+'_'+'global'+'_'+'monthly'+'_'+period+'.nc4'
                         outfile_assembled = model.lower()+'_'+forcing+'_historical_'+future_experiment+'_'+variable+'_'+'1861_2099'+'_'+'annual'+'.nc4'
 
-                        # make output directory per model if not done yet
-                        outdir_model = outdir+'/'+variable+'/'+model+'/'
-                        if not os.path.isdir(outdir_model):
-                            os.system('mkdir '+outdir_model)
-                    
                         # if simulation is available 
                         if os.path.isfile(path+infile): 
 
+                            # make output directory per model if not done yet
+                            outdir_model = outdir+'/'+variable+'/'+model+'/'
+                            if not os.path.isdir(outdir_model):
+                                os.system('mkdir '+outdir_model)
+                        
                             # calculate annual means per model for each forcing (if not done so)
                             outfile_annual = model.lower()+'_'+forcing+'_'+experiment_fn+'_'+variable+'_'+'1861_2005'+'_'+'annual'+'.nc4'
                             if (not os.path.isfile(outdir_model+outfile_assembled)):
@@ -149,25 +147,20 @@ experiment= 'historical_'+future_experiment # can also be set to 'historical' or
 # for the different models
 riverheat = {}
 rivertemp = {}
-rivermass = {}
+riverstor = {}
 
 # define names and paths for stream temperatures
 var_streamtemp = 'streamtemp'                        
 forcings_streamtemp = ['GFDL-ESM2M', 'HadGEM2-ES', 'IPSL-CM5A-LR', 'MIROC5']
 outdir_streamtemp = outdir+'/'+var_streamtemp+'/'
 
-
-# load continent area 
-continentalarea_fn = indir_lakedata + 'watergap_22d_static_continentalarea.nc4' 
-ds_ca = xr.open_dataset(continentalarea_fn,decode_times=False)
-
-# use continental area in model (also takes coastal values into account)
-continentalarea = ds_ca.continentalarea.values * 10**(9) # in m²
+# calculate grid area (for riverstorage conversion)
+grid_area      = calc_grid_area(resolution)
 
 for model in models:
     riverheat_model={} # sub directory for each model
     rivertemp_model={}
-    rivermass_model={}
+    riverstor_model={}
     for ind_forcing,forcing in enumerate(forcings):
 
         # define directory and filename
@@ -192,7 +185,7 @@ for model in models:
             riverstor = riverstor[years_isimip.index(start_year):years_isimip.index(end_year),:,:] # constant at first year
 
             # convert riverstorage from kg/m² to kg
-            rivermass_forcing = riverstor * continentalarea.squeeze()
+            rivermass_forcing = riverstor * grid_area 
 
             riverheat_forcing =  cp_liq  *  rivermass_forcing * rivertemp_forcing 
 
@@ -219,20 +212,30 @@ for model in models:
         rivermass.update({model:rivermass_model})
 
 
-
 #%%
 # ------------------------------------------------------------------------
 # Absolute heat content calculations
 
+if flag_saveriverheat_forAmazon: 
+    
+    del rivertemp, rivermass
 
+    riverheat_ensmean = ens_spmean_ensmean(riverheat)
 
-riverheat_ts = timeseries(riverheat)
-riverheat_ens = ensmean(riverheat)
-riverheat_ensmean_ts = ensmean_ts(riverheat)
-riverheat_ensmin_ts = ensmin_ts(riverheat)
-riverheat_ensmax_ts = ensmax_ts(riverheat)
+    riverheat_pi = np.nanmean(riverheat_ensmean[0:30,:,:],axis=0)
+    riverheat_pres = np.nanmean(riverheat_ensmean[-10:-1,:,:],axis=0)
 
-riverheat_ens_spmean = ens_spmean(riverheat)
+    riverheat_anom_spmean = riverheat_pres - riverheat_pi
+
+    np.save(outdir+'riverheat_anom_spmean.npy', riverheat_anom_spmean) 
+
+# riverheat_ts = timeseries(riverheat)
+# riverheat_ens = ensmean(riverheat)
+# riverheat_ensmean_ts = ensmean_ts(riverheat)
+# riverheat_ensmin_ts = ensmin_ts(riverheat)
+# riverheat_ensmax_ts = ensmax_ts(riverheat)
+
+# riverheat_ens_spmean = ens_spmean(riverheat)
 
 #%%
 # ---------------------------------------------------------------------------
@@ -255,7 +258,7 @@ for model in riverheat:
         # subtract reference to calculate anomaly 
         riverheat_anom_model[forcing] = riverheat[model][forcing] - riverheat_ref_forcing
     riverheat_anom[model] = riverheat_anom_model
-
+del riverheat
 # River temperature
 # define reference 
 rivertemp_anom = {}
@@ -300,24 +303,22 @@ for model in rivermass:
 
 riverheat_anom_ts = timeseries(riverheat_anom)
 
-riverheat_anom_ens = ensmean(riverheat_anom)
-
-riverheat_anom_ensmean_ts = moving_average(ensmean_ts(riverheat_anom))
-riverheat_anom_ensmin_ts  = moving_average(ensmin_ts(riverheat_anom))
-riverheat_anom_ensmax_ts  = moving_average(ensmax_ts(riverheat_anom))
-
-riverheat_anom_ensmean_ts = moving_average(ensmean_ts(riverheat_anom))
-riverheat_anom_ensmin_ts  = moving_average(ensmin_ts(riverheat_anom))
-riverheat_anom_ensmax_ts  = moving_average(ensmax_ts(riverheat_anom))
-
-riverheat_anom_ens_spmean = ens_spmean(riverheat_anom)
 
 # rivertemp and river mass
 rivertemp_anom_ts = timeseries_mean(rivertemp_anom)
 rivermass_anom_ts = timeseries(rivermass_anom)
 
 
+if flag_saveriverheat: 
+    riverheat_anom_ensmean_ts = moving_average(ensmean_ts(riverheat_anom))
+    riverheat_anom_ensmin_ts  = moving_average(ensmin_ts(riverheat_anom))
+    riverheat_anom_ensmax_ts  = moving_average(ensmax_ts(riverheat_anom))
+    riverheat_anom_std_ts     = moving_average(ensmax_ts(riverheat_anom))
 
+    np.save(outdir+'riverheat_ensmean.npy', riverheat_anom_ensmean_ts) 
+    np.save(outdir+'riverheat_ensmin.npy',riverheat_anom_ensmin_ts) 
+    np.save(outdir+'riverheat_ensmax.npy',riverheat_anom_ensmax_ts) 
+    np.save(outdir+'riverheat_std.npy', riverheat_anom_std_ts ) 
 #%%
 # ---------------------------------------------------------------------------------------
 # Plotting
@@ -340,8 +341,6 @@ mpl.rc('axes',labelsize=12)
 mpl.rc('legend',fontsize='large')
 mpl.rc('text',color='dimgrey')
 
-plotdir='/home/inne/documents/phd/data/processed/isimip_lakeheat/plots/'
-plotdir= 'E:/data/processed/isimip_lakeheat/plots/'
 #%%
 # lineplot of one model anomaly- all forcings 5-year moving average
 colors_primary = ['deepskyblue','coral']
@@ -355,7 +354,6 @@ x_values = moving_average(np.asarray(years_analysis))
 line_zero = ax.plot(x_values, np.zeros(np.shape(x_values)), linewidth=0.5,color='darkgray')
 
 for ind_mod, model in enumerate(models):
-    print
     line2 = ax.plot(x_values,riverheat_anom_ensmax_ts[model], color=colors_secondary[ind_mod])
     line3 = ax.plot(x_values,riverheat_anom_ensmin_ts[model], color=colors_secondary[ind_mod])
     area1 = ax.fill_between(x_values,riverheat_anom_ensmin_ts[model],riverheat_anom_ensmax_ts[model], color=colors_secondary[ind_mod])
@@ -438,6 +436,120 @@ for model in models:
     plt.savefig(plotdir+model+'rivermass_acc_per_forcing'+'.png',dpi=300)
 
 
+
+
+#%% Make supplementary figure 
+
+var = riverheat_anom_ts
+ylim  = (-0.7e21,1.6e21)
+ylabel = 'Energy [J]'
+clr = 'olive'
+figname = 'riverheat_per_forcing_2mods'
+
+f,ax = plt.subplots(2,4, figsize=(13,6))
+x_values = np.asarray(years_analysis)
+labels = ['(a)','(b)','(c)','(d)','(e)','(f)','(g)','(h)']
+
+ax = ax.ravel()
+
+nplot = 0
+
+for model in models: 
+
+    for forcing in forcings:
+
+        line_zero = ax[nplot].plot(x_values, np.zeros(np.shape(x_values)), linewidth=0.5,color='darkgray')
+        line1 = ax[nplot].plot(x_values,var[model][forcing], color=clr)
+        ax[nplot].set_xlim(x_values[0],x_values[-1])
+        ax[nplot].set_ylim(ylim)
+        ax[nplot].text(0.02, 0.90, labels[nplot], transform=ax[nplot].transAxes, fontsize=12)
+        
+
+        # only plot ylabel in first column 
+        if (nplot/4).is_integer(): 
+            ax[nplot].set_ylabel(ylabel)
+
+        # plot forcings only at the top row
+        if nplot < 4: 
+            ax[nplot].set_title(forcing, loc='right')
+        nplot=nplot+1
+
+
+    #f.suptitle(model+' river mass anomalies (reference 1900-1929)', fontsize=16)
+f.tight_layout(rect=[0, 0.03, 1, 0.95])
+plt.text(-0.04, 0.91, models[0], fontsize=14, transform=plt.gcf().transFigure, fontweight = 'bold')       
+plt.text(-0.04, 0.45, models[1], fontsize=14, transform=plt.gcf().transFigure, fontweight = 'bold')            
+
+plt.savefig(plotdir+figname+'.png')
+
+
+# %%
+# plot river mass and heat 
+
+# river mass
+var = rivermass_anom_ts
+ylim  = (-5.5e14,13e14)
+ylabel = 'Mass [kg]'
+clr = 'deepskyblue'
+
+# river temperature
+var2 = rivertemp_anom_ts[models[0]]
+ylabel2 = 'Temperature [K]'
+ylim2  = (-0.3,1)
+clr2 = 'brown'
+
+figname = 'rivermass_and_temp_per_forcing_2mods'
+
+
+f,ax = plt.subplots(3,4, figsize=(12,8))
+x_values = np.asarray(years_analysis)
+labels = ['(a)','(b)','(c)','(d)','(e)','(f)','(g)','(h)','(i)','(j)','(k)', '(l)']
+
+ax = ax.ravel()
+
+nplot = 0
+
+
+# plot row of temperature
+for forcing in forcings:
+    line_zero = ax[nplot].plot(x_values, np.zeros(np.shape(x_values)), linewidth=0.5,color='darkgray')
+    line1 = ax[nplot].plot(x_values,var2[forcing], color=clr2)
+    ax[nplot].set_xlim(x_values[0],x_values[-1])
+    ax[nplot].set_ylim(ylim2)
+    ax[nplot].text(0.02, 0.90, labels[nplot], transform=ax[nplot].transAxes, fontsize=12)
+    ax[nplot].set_title(forcing, loc='right')
+    if (nplot/4).is_integer(): 
+        ax[nplot].set_ylabel(ylabel2)
+    nplot = nplot+1
+
+
+# plot two rows of river mass 
+for model in models: 
+
+    for forcing in forcings:
+
+        line_zero = ax[nplot].plot(x_values, np.zeros(np.shape(x_values)), linewidth=0.5,color='darkgray')
+        line1 = ax[nplot].plot(x_values,var[model][forcing], color=clr)
+        ax[nplot].set_xlim(x_values[0],x_values[-1])
+        ax[nplot].set_ylim(ylim)
+        ax[nplot].text(0.02, 0.90, labels[nplot], transform=ax[nplot].transAxes, fontsize=12)
+        
+
+        # only plot ylabel in first column 
+        if (nplot/4).is_integer(): 
+            ax[nplot].set_ylabel(ylabel)
+
+        nplot=nplot+1
+
+
+
+
+    #f.suptitle(model+' river mass anomalies (reference 1900-1929)', fontsize=16)
+f.tight_layout(rect=[0, 0.03, 1, 0.95])
+plt.text(-0.065, 0.62, models[0], fontsize=14, transform=plt.gcf().transFigure, fontweight = 'bold')            
+plt.text(-0.065, 0.31, models[1], fontsize=14, transform=plt.gcf().transFigure, fontweight = 'bold')       
+
+plt.savefig(plotdir+figname+'.png')
 
 
 #%%

@@ -36,6 +36,9 @@ indir_lakedata   = basepath + 'data/isimip_laketemp/' # directory where lake fra
 outdir = basepath + 'data/processed/'+ project_name
 flag_ref = 'pre-industrial'
 
+start_year = 1900
+end_year = 2017
+years_analysis         = range(start_year,end_year,1)
 
 
 mpl.rc('axes',edgecolor='grey')
@@ -61,7 +64,6 @@ def extract_from_hydrolakes(extend,extend_fname):
         hydrolakes_dams_path = '/home/inne/documents/phd/data/HydroLAKES_polys_v10_shp/Hydrolakes_light.shp'
         print('Loading HydroLAKES ...')
         lakes = gpd.read_file(hydrolakes_dams_path)
-
 
         boundingbox = box(extend[0], extend[1], extend[2], extend[3])
         print('Extracting lakes ...')
@@ -167,6 +169,90 @@ def plot_region_hc_map(var, region_props, lakes_path, indir_lakedata):
     plt.savefig(plotdir+fig_name+'.png')
 
 
+def plot_region_hc_rivers_map(var, region_props, indir_lakedata):
+
+    # get region specific info from dictionary
+    extent            = region_props['extent']
+    continent_extent  = region_props['continent_extent']
+    name              = region_props['name']
+    name_str          = region_props['name_str']
+    ax_location       = region_props['ax_location']
+    levels            = region_props['levels']
+    fig_size           = region_props['fig_size']
+    cb_orientation    = region_props['cb_orientation']
+
+    # settings
+    clb_label='Joule'
+    title_str=name_str+ ' heat content anomaly'
+    fig_name='Heat_content_'+name
+    cmap = 'YlOrBr'
+
+    cmap, norm = mpu.from_levels_and_cmap(levels, cmap, extend='max')
+    lon,lat = get_lonlat(indir_lakedata)
+    LON, LAT = mpu.infer_interval_breaks(lon,lat)
+ 
+    # plotting
+    fig, ax = plt.subplots(1,1,figsize=fig_size, subplot_kw={'projection': ccrs.PlateCarree()})
+
+    ax.add_feature(ctp.feature.OCEAN, color='gainsboro')
+    ax.coastlines(color="grey")
+    # add the data to the map (more info on colormaps: https://matplotlib.org/users/colormaps.html)
+    h = ax.pcolormesh(LON,LAT,var, cmap=cmap, norm=norm)
+
+    # set grid lines
+    gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
+                  linewidth=0.5, color='gainsboro', alpha=0.5)
+    gl.xlines = True
+    gl.xformatter = LONGITUDE_FORMATTER
+    gl.yformatter = LATITUDE_FORMATTER
+    gl.xlabels_bottom = None
+    gl.ylabels_right = None
+
+    # set extent (in right way)
+    extent[1], extent [2] = extent[2], extent[1]
+    ax.set_extent(extent)
+
+    # create effect for map borders: 
+    effect = Stroke(linewidth=1.5, foreground='darkgray')
+    # set effect for main ax
+    ax.outline_patch.set_path_effects([effect])
+    ax1.text(0.03, 0.92, label, transform=ax1.transAxes, fontsize=14)
+
+
+    # Create an inset GeoAxes showing the location of the lakes region
+    #x0 y0 width height
+    sub_ax = fig.add_axes(ax_location,
+                            projection=ccrs.PlateCarree())
+    sub_ax.set_extent(continent_extent)
+
+    sub_ax.outline_patch.set_path_effects([effect])
+    extent_box = sgeom.box(extent[0], extent[2], extent[1], extent[3])
+    sub_ax.add_geometries([extent_box], ccrs.PlateCarree(), facecolor='none',
+                            edgecolor='red', linewidth=2)
+
+
+    # Add the land, coastlines and the extent of the inset axis
+    sub_ax.add_feature(cfeature.LAND, edgecolor='gray')
+    sub_ax.coastlines(color='gray')
+    extent_box = sgeom.box(extent[0], extent[2], extent[1], extent[3])
+    sub_ax.add_geometries([extent_box], ccrs.PlateCarree(), facecolor='none',
+                            edgecolor='black', linewidth=2)
+
+
+    # plot the colorbar
+    cbar = mpu.colorbar(h, ax, extend='max', orientation=cb_orientation, pad = 0.05)
+    if cb_orientation =='vertical':
+        cbar.ax.set_ylabel(clb_label, size=16)
+    elif cb_orientation == 'horizontal':
+        cbar.ax.set_xlabel(clb_label, size=16)
+
+    #ax.set_title(title_str, pad=10)
+
+    plotdir='/home/inne/documents/phd/data/processed/isimip_lakeheat/plots/'
+    plt.savefig(plotdir+fig_name+'.png')
+
+
+
 
 def plot_global_hc_map(name_str, var, lakes_path, indir_lakedata):
 
@@ -231,6 +317,7 @@ lakes_path = '/home/inne/documents/phd/data/processed/lakes_shp/'
 # load lake heat (to be removed)
 lakeheat_climate = np.load(outdir+'lakeheat_climate.npy',allow_pickle='TRUE').item()
 
+
 # load lon lat of lakeheat data
 
 # calculate timeseries maps of mean of all models and forcings 
@@ -243,9 +330,13 @@ lakeheat_anom_spmean = lakeheat_pres-lakeheat_pi
 #np.nanmean(lakeheat_anom[years_analysis.index(2006):-1,:,:], axis=0)
 
 
-# extends need to be 0.25 ending
+# river heat: 
+riverheat_anom_spmean = np.load(outdir+'riverheat/riverheat_anom_spmean.npy') 
+
 
 #%%# make dictionaries with lake region properties
+# extends need to be 0.25 ending
+
 region_LGL = {
     'extent'          : [-92.5,41,-75.5,49.5], # original extent 
     'calc_extent'     : [-92.75,41.25,-75.75,49.75], # original extent [-92.5,41,-75.5,49.5]
@@ -296,6 +387,22 @@ region_GEL = {
     'cb_orientation'  : 'horizontal'
 }
 
+#%%
+
+#%%
+# Amazon region
+region_AM = {
+    'extent'          : [-78,-10,-48,3.5], # original extent [27.5,-9,36,2.5]
+    'calc_extent'     : [-78.25,-10.25,-48.25,3.75],
+    'continent_extent': [-84,-33,-55,13],     # continent_extent for inset
+    'ax_location'     : [0.6545, 0.22, 0.4, 0.2],
+    'name'            : 'Amazon',       
+    'name_str'        : 'Amazon river basin', 
+    'levels'          : np.arange(0,8.5e17,0.5e17),
+    'fig_size'         : (13,8),
+    'cb_orientation'  : 'horizontal'
+}
+
 
 #%% actual figure creation
 
@@ -305,11 +412,13 @@ plot_region_hc_map(lakeheat_anom_spmean, region_AGL, lakes_path, indir_lakedata)
 
 plot_region_hc_map(lakeheat_anom_spmean, region_GEL, lakes_path, indir_lakedata)
 
+plot_region_hc_rivers_map(riverheat_anom_spmean, region_AM, indir_lakedata)
+
 # plot global
 plot_global_hc_map('global',lakeheat_anom_spmean, lakes_path, indir_lakedata)
 
 
-#%% Rework pct lake function
+#%% Functions for time series plotting
 
 
 def calc_region_hc_ts(lakeheat, lakes_path, region_props, indir_lakedata, flag_ref, years_analysis):
@@ -328,7 +437,7 @@ def calc_region_hc_ts(lakeheat, lakes_path, region_props, indir_lakedata, flag_r
 
     lake_pct_region = calc_areafrac_shp2rst_region(path_lakes,outdir_lakepct,outfilename,resolution,extent)
     # extract region lake heat from dictionary and apply weights 
-    lakeheat_wgt_region = extract_weighted_lake_region(indir_lakedata,lakeheat,extent, lake_pct_region/100)
+    lakeheat_wgt_region = extract_region(indir_lakedata,lakeheat,extent)
     
     # calculate anomaly for extracted lake region
     lakeheat_wgt_anom =  calc_anomalies(lakeheat_wgt_region, flag_ref,years_analysis)
@@ -371,7 +480,7 @@ def plot_region_hc_ts(ax1,flag_uncertainty,region_props,lakeheat_wgt_anom, label
     ax1.set_xticklabels([1900,1920,1940,1960,1980,2000,2015] )
     #ax1.set_ylim(-0.4e20,1e20)
     ax1.set_ylabel('Energy [J]')
-    ax1.set_title('Heat uptake of the '+name_str, loc='right')
+    ax1.set_title(name_str, loc='right')
     ax1.text(0.03, 0.92, label, transform=ax1.transAxes, fontsize=14)
 
 
@@ -387,29 +496,33 @@ mpl.rc('axes',labelsize=12)
 flag_uncertainty = '2std' # or '2std' or 'envelope'
 
 # Laurentian Great Lakes
-f,(ax1,ax2,ax3) = plt.subplots(3,1,figsize=(6,10))
+f,(ax1,ax2,ax3,ax4) = plt.subplots(4,1,figsize=(6,14))
 
 # calculate lake heat anomaly for shapefiles of region, weighted with lake pct
 lakeheat_wgt_anom = calc_region_hc_ts(lakeheat_climate, lakes_path, region_LGL, indir_lakedata, flag_ref,years_analysis)
-label = ' '
+label = '(b)'
 colors = ('coral','sandybrown')
 plot_region_hc_ts(ax1,flag_uncertainty,region_LGL,lakeheat_wgt_anom, label, colors, years_analysis)
 
 # African Great Lkaes
 lakeheat_wgt_anom = calc_region_hc_ts(lakeheat_climate, lakes_path, region_AGL, indir_lakedata, flag_ref,years_analysis)
-label = ' '
+label = '(d)'
 colors = ('coral','sandybrown')
 plot_region_hc_ts(ax2,flag_uncertainty,region_AGL,lakeheat_wgt_anom, label, colors, years_analysis)
 
 
 lakeheat_wgt_anom = calc_region_hc_ts(lakeheat_climate, lakes_path, region_GEL, indir_lakedata, flag_ref,years_analysis)
-label = ' '
+label = '(f)'
 colors = ('coral','sandybrown')
 plot_region_hc_ts(ax3,flag_uncertainty,region_GEL,lakeheat_wgt_anom, label, colors, years_analysis)
 
+riverheat_region_anom = np.load(outdir+'riverheat/riverheat_amazon_anom.npy').item() 
+label = '(h)'
+colors = ('coral','sandybrown')
+plot_region_hc_ts(ax4,flag_uncertainty,region_AM,riverheat_region_anom, label, colors, years_analysis)
 
 plt.tight_layout()
-subplots_adjust(left=None, bottom=0.3, right=None, top=None, wspace=None, hspace=None)
+plt.subplots_adjust(left=None, bottom=0.1, right=None, top=None, wspace=None, hspace=None)
 plotdir='/home/inne/documents/phd/data/processed/isimip_lakeheat/plots/'
 plt.savefig(plotdir+'regions_hc_ts.png')
 
