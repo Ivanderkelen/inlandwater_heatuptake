@@ -5,8 +5,6 @@ Date        : June 2019
 
 Main script for lake heat calculation and plotting
 
-Notes: SCRIPT IN PROGRESS
-
 
 """
 
@@ -59,27 +57,26 @@ flag_preprocess = False
 
 flag_interpolate_CLM45 = False # make interpolation of CLM temperature fields. (takes time)
 
-flag_calcheat  = False # whether or not to calculate lake heat (otherwise use saved lake heat)
+flag_calcheat  = True # whether or not to calculate lake heat (otherwise use saved lake heat)
 
 # whether or not to save calculated lake heat (can only be true if flag_calcheat is true)
-flag_savelakeheat = False
+flag_savelakeheat = True
 
 flag_get_values = False
 
-flag_plotting_forcings = False 
+flag_plotting_forcings = False
 
 flag_plotting_paper = True
- 
 
 flag_plotting_input_maps = False
 
-flag_save_plots = True
+flag_save_plots = False
 
 # -----------------------------
 # scenarios
 
 # flag to set which scenario is used for heat calculation
-flag_scenario = 'both'        # 'climate'    : only climate change (lake cover constant at 2005 level)
+flag_scenario = 'reservoirs'        # 'climate'    : only climate change (lake cover constant at 2005 level)
                               # 'reservoirs' : only reservoir construction (temperature constant at 1900 level)
                               # 'both'       : reservoir construction and climate
 
@@ -105,8 +102,8 @@ indir_lakedata   = basepath + 'data/isimip_laketemp/' # directory where lake fra
 # -----------------------------------------------------------
 # MODELS & FORCINGS
 
-models      = ['SIMSTRAT-UoG']#['SIMSTRAT-UoG']#'CLM45','VIC-LAKE','LAKE']
-forcings    = ['hadgem2-es']#['gfdl-esm2m','hadgem2-es','ipsl-cm5a-lr','miroc5']
+models      = ['CLM45']#['SIMSTRAT-UoG']#'CLM45','VIC-LAKE','LAKE']
+forcings    = ['gfdl-esm2m','hadgem2-es','ipsl-cm5a-lr','miroc5']
 experiments = ['historical','future']
 
 # experiment used for future simulations (needed to differentiate between filenames)
@@ -117,13 +114,17 @@ variables   = ['watertemp']
 
 # -----------------------------------------------------------
 # PERIODS
-start_year = 1900
-end_year = 2017
+start_year = 1896
+end_year = 2025
 
-years_isimip           = range(1861,2099,1)
-years_grand            = range(1900,2018,1)
+years_grand            = range(1900,2025,1)
 years_analysis         = range(start_year,end_year,1)
 years_pi               = range(1861,1891,1)
+
+# depending on model 
+years_isimip = {}
+years_isimip['CLM45'] = range(1861,2099,1)
+years_isimip['SIMSTRAT-UoG'] = range(1891,2020,1)
 
 
 # -----------------------------------------------------------
@@ -171,11 +172,11 @@ if flag_interpolate_CLM45:
 # -------------------------------------------------------------------------
 
 if flag_calcheat: 
-    from calc_volumes  import *
+    #from calc_volumes  import *
     from calc_lakeheat import *
 
-    volume_per_layer = calc_volume_per_layer(flag_scenario, indir_lakedata, years_grand, start_year,end_year, resolution, models,outdir)
-    lakeheat = calc_lakeheat(models,forcings,future_experiment,volume_per_layer, outdir, years_isimip,start_year, end_year, flag_scenario, flag_savelakeheat, rho_liq, cp_liq)
+    #volume_per_layer = calc_volume_per_layer(flag_scenario, indir_lakedata, years_grand, start_year,end_year, resolution, models,outdir)
+    lakeheat = calc_lakeheat(models,forcings,future_experiment, indir_lakedata, years_grand, resolution,outdir, years_isimip,start_year, end_year, flag_scenario, flag_savelakeheat, rho_liq, cp_liq)
 
 else: 
     # load from file based on scenario: 
@@ -205,6 +206,7 @@ if flag_get_values:
 if flag_plotting_forcings: 
     from plotting_lakeheat import * 
     plot_forcings(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, years_analysis,outdir)
+    plot_forcings_allmodels(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, years_analysis,outdir)
 
 
 if flag_plotting_paper: 

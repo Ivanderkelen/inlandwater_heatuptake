@@ -14,8 +14,10 @@ Subroutine to calculate lake heat content per grid cell
 import os 
 import xarray as xr
 import numpy as np
+from calc_volumes import * 
 
-def calc_lakeheat(models,forcings,future_experiment,volume_per_layer,outdir, years_isimip,start_year, end_year, flag_scenario, flag_savelakeheat, rho_liq, cp_liq):
+
+def calc_lakeheat(models,forcings,future_experiment, indir_lakedata, years_grand, resolution,outdir, years_isimip,start_year, end_year, flag_scenario, flag_savelakeheat, rho_liq, cp_liq):
 
     # define experiment
     experiment= 'historical_'+future_experiment # can also be set to 'historical' or 'rcp60', but start_year will in this case have to be within year range
@@ -26,6 +28,9 @@ def calc_lakeheat(models,forcings,future_experiment,volume_per_layer,outdir, yea
 
     for model in models:
         lakeheat_model={} # sub directory for each model
+        
+        # calculate depth per layer 
+        depth_per_layer = calc_depth_per_layer(flag_scenario, indir_lakedata, years_grand, start_year,end_year, resolution, model,outdir)
 
         for forcing in forcings:
 
@@ -46,18 +51,22 @@ def calc_lakeheat(models,forcings,future_experiment,volume_per_layer,outdir, yea
         
                 if flag_scenario == 'reservoirs': 
                     # use lake temperature from first year of analysis
-                    laketemp = laketemp[years_isimip.index(start_year),:,:,:]
+                    laketemp = laketemp[years_isimip[model].index(start_year),:,:,:]
                 else: 
                     # extract years of analysis
-                    laketemp = laketemp[years_isimip.index(start_year):years_isimip.index(end_year),:,:,:]
+                    laketemp = laketemp[years_isimip[model].index(start_year):years_isimip[model].index(end_year),:,:,:]
 
-                lakeheat_layered =  rho_liq  * volume_per_layer[model] * cp_liq * laketemp
-            
+                lakeheat_layered =  rho_liq  * depth_per_layer * cp_liq * laketemp
+                
+                # add manual time dimension for reservoir scenario. 
+                if flag_scenario == 'reservoirs': lakeheat_layered = np.expand_dims(lakeheat_layered,axis=0)
+
                 # sum up for total layer (less memory)
-                lakeheat_forcing = lakeheat_layered.sum(axis=1)
+                lakeheat_perarea = lakeheat_layered.sum(axis=1)
+                lakeheat_forcing = calc_lakeheat_area(resolution, indir_lakedata, flag_scenario, lakeheat_perarea,years_grand,start_year,end_year)
 
                 # clean up
-                del laketemp, ds_laketemp
+                del laketemp, ds_laketemp, lakeheat_layered, lakeheat_perarea
 
                 # save lakeheat in directory structure per forcing
             if not lakeheat_model:

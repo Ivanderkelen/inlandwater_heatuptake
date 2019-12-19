@@ -32,7 +32,7 @@ from dict_functions import *
 flag_preprocess = False 
 
 flag_saveriverheat = True
-flag_saveriverheat_forAmazon = False
+flag_saveriverheat_forAmazon = True
 # Reference to which period/year anomalies are calculated
 flag_ref = 'pre-industrial' # 'pre-industrial': first 30 years (1900-1929 for start_year =1900)
 
@@ -59,13 +59,12 @@ future_experiment = 'rcp60'
 variables   = ['riverstor']
 
 
-start_year = 1900
-end_year = 2017
+start_year = 1896
+end_year = 2025
 
 years_isimip           = range(1861,2099,1)
 years_grand            = range(1900,2010,1)
 years_analysis         = range(start_year,end_year,1)
-years_pi               = range(1861,1891,1)
 
 # define constants
 resolution = 0.5   # degrees
@@ -214,11 +213,27 @@ for model in models:
 
 #%%
 # ------------------------------------------------------------------------
-# Absolute heat content calculations
+# Save river heat for case study maps 
+
+def calc_region_riverhc_ts(riverheat, region_props, indir_lakedata, flag_ref,years_analysis):
+    """ Calculate the timeseries of the regions heat content """
+ 
+    extent            = region_props['calc_extent']
+    name              = region_props['name']
+
+
+  # extract region lake heat from dictionary and apply weights 
+    riverheat_region = extract_region(indir_lakedata,riverheat,extent)
+    riverheat_region_anom =  calc_anomalies(riverheat_region, flag_ref,years_analysis)
+
+    return riverheat_region_anom
+
+
 
 if flag_saveriverheat_forAmazon: 
     
     del rivertemp, rivermass
+
 
     riverheat_ensmean = ens_spmean_ensmean(riverheat)
 
@@ -228,6 +243,29 @@ if flag_saveriverheat_forAmazon:
     riverheat_anom_spmean = riverheat_pres - riverheat_pi
 
     np.save(outdir+'riverheat_anom_spmean.npy', riverheat_anom_spmean) 
+
+    # extract area for timeseries
+     
+    # load necessary variables
+    # Amazon region
+    region_AM = {
+        'extent'          : [-78,-10,-48,3.5], # original extent [27.5,-9,36,2.5]
+        'calc_extent'     : [-78.25,-10.25,-48.25,3.75],
+        'continent_extent': [-84,-33,-55,13],     # continent_extent for inset
+        'ax_location'     : [0.6545, 0.22, 0.4, 0.2],
+        'name'            : 'Amazon',       
+        'name_str'        : 'Amazon river', 
+        'levels'          : np.arange(0,8.5e17,0.5e17),
+        'fig_size'         : (13,8),
+        'cb_orientation'  : 'horizontal'
+    }
+    indir_lakedata   = basepath + 'data/isimip_laketemp/' # directory where lake fraction and depth are located
+
+    riverheat_amazon_anom = calc_region_riverhc_ts(riverheat, region_AM, indir_lakedata, flag_ref,years_analysis)
+    np.save(outdir+'riverheat_amazon_anom.npy', riverheat_amazon_anom) 
+
+
+
 
 # riverheat_ts = timeseries(riverheat)
 # riverheat_ens = ensmean(riverheat)

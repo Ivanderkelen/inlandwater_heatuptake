@@ -33,6 +33,9 @@ mpl.rc('text',color='dimgrey')
 
 
 def plot_forcings(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, years_analysis,outdir):
+    
+    
+    xticks = np.array([1900,1920,1940,1960,1980,2000,2020])
 
         #%% Plot raw heat uptake per model forcing 
     # calculate anomalies
@@ -54,8 +57,7 @@ def plot_forcings(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref,
             line_zero = ax[nplot].plot(x_values, np.zeros(np.shape(x_values)), linewidth=0.5,color='darkgray')
             line1 = ax[nplot].plot(x_values,lakeheat_anom_ts[model][forcing], color='coral')
             ax[nplot].set_xlim(x_values[0],x_values[-1])
-            ax[nplot].set_xticks(ticks= np.array([1900,1920,1940,1960,1980,2000,2015]))
-            ax[nplot].set_xticklabels([1900,1920,1940,1960,1980,2000,2015] )
+            ax[nplot].set_xticks(ticks=xticks)
             #ax[nplot].set_ylim(-6e20,8e20)
             ax[nplot].set_ylabel('Energy [J]')
             ax[nplot].set_title(forcing, pad=15)
@@ -65,6 +67,50 @@ def plot_forcings(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref,
 
         if flag_save_plots:
             plt.savefig(plotdir+model+'heat_acc_per_forcing'+'.png',dpi=300)
+
+
+def plot_forcings_allmodels(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, years_analysis,outdir):
+
+    xticks = np.array([1900,1920,1940,1960,1980,2000,2020])
+
+
+        #%% Plot raw heat uptake per model forcing 
+    # calculate anomalies
+    lakeheat_anom = calc_anomalies(lakeheat, flag_ref,years_analysis)
+    # Calculate timeseries of lake heat anomaly
+    lakeheat_anom_ts = timeseries(lakeheat_anom)
+
+    # Plotting functions 
+    # all forcings in a row per list of models 
+    nmodels = len(lakeheat)
+    nforcings = len(lakeheat[list(lakeheat.keys())[0]])
+    f,ax = plt.subplots(nmodels,nforcings, figsize=(2*nmodels,4*nforcings))
+    x_values = np.asarray(years_analysis)
+    labels = ['(a)','(b)','(c)','(d)','(e)','(f)','(g)','(h)','(i)','(j)','(k)', '(l)','(m)','(n)','(o)','(p)','(q)','(r)','(s)']
+
+    nplot=0
+    ax = ax.ravel()
+    for model in models:
+        
+        for forcing in forcings:
+
+            line_zero = ax[nplot].plot(x_values, np.zeros(np.shape(x_values)), linewidth=0.5,color='darkgray')
+            line1 = ax[nplot].plot(x_values,lakeheat_anom_ts[model][forcing], color='coral')
+            ax[nplot].set_xlim(x_values[0],x_values[-1])
+            ax[nplot].set_xticks(ticks=xticks)
+            #ax[nplot].set_ylim(-6e20,8e20)
+            ax[nplot].set_ylabel('Energy [J]')
+            ax[nplot].set_title(model +'     '+forcing, loc='right')
+            ax[nplot].text(0.02, 0.90, labels[nplot], transform=ax[nplot].transAxes, fontsize=12)
+
+            nplot = nplot+1
+
+    f.tight_layout(rect=[0, 0.03, 1, 0.95])
+
+    if flag_save_plots:
+       plt.savefig(plotdir+'heat_acc_per_forcing'+'.png',dpi=300)
+
+
 
 
 
@@ -108,6 +154,9 @@ def do_plotting(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, y
 
     # load river heat variables
 
+    # general plotting settings: 
+    xticks = np.array([1900,1920,1940,1960,1980,2000,2020])
+
 
     # %% Figure 1
     # ------------------------------------------------
@@ -135,8 +184,7 @@ def do_plotting(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, y
         area2 = ax1.fill_between(x_values,under_2std,upper_2std, color='sandybrown',alpha=0.5)
 
     ax1.set_xlim(x_values[0],x_values[-1])
-    ax1.set_xticks(ticks= np.array([1902,1920,1940,1960,1980,2000,2014]))
-    ax1.set_xticklabels([1900,1920,1940,1960,1980,2000,2015] )
+    ax1.set_xticks(ticks= xticks)
     #ax1.set_ylim(-0.4e20,1e20)
     ax1.set_ylabel('Energy [J]')
     ax1.set_title('Natural lake heat uptake', loc='right')
@@ -160,8 +208,7 @@ def do_plotting(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, y
         area2 = ax2.fill_between(x_values,under_2std,upper_2std, color='plum',alpha=0.5)
 
     ax2.set_xlim(x_values[0],x_values[-1])
-    ax2.set_xticks(ticks= np.array([1902,1920,1940,1960,1980,2000,2014]))
-    ax2.set_xticklabels([1900,1920,1940,1960,1980,2000,2015] )
+    ax2.set_xticks(ticks= xticks)
     #ax1.set_ylim(-0.4e20,1e20)
     ax2.set_ylabel('Energy [J]')
     ax2.set_title('Reservoir heat uptake', loc='right')
@@ -184,8 +231,7 @@ def do_plotting(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, y
         area3 = ax3.fill_between(x_values,under_2std,upper_2std, color='lightsteelblue')
 
     ax3.set_xlim(x_values[0],x_values[-1])
-    ax3.set_xticks(ticks= np.array([1902,1920,1940,1960,1980,2000,2014]))
-    ax3.set_xticklabels([1900,1920,1940,1960,1980,2000,2015] )
+    ax3.set_xticks(ticks=xticks)
     #ax1.set_ylim(-0.4e20,1e20)
     ax3.set_ylabel('Energy [J]')
     ax3.set_title('River heat uptake', loc='right')
@@ -274,8 +320,7 @@ def do_plotting(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, y
         #area2 = ax1.fill_between(x_values,under_2std,upper_2std, color='sandybrown',alpha=0.5)
 
     ax1.set_xlim(x_values[0],x_values[-1])
-    ax1.set_xticks(ticks= np.array([1902,1920,1940,1960,1980,2000,2014]))
-    ax1.set_xticklabels([1900,1920,1940,1960,1980,2000,2015] )
+    ax1.set_xticks(xticks)
     #ax1.set_ylim(-0.4e20,1e20)
     ax1.set_ylabel('Energy [J]')
     ax1.set_title('Heat accumulation from climate change', loc='right')
@@ -340,8 +385,7 @@ def do_plotting(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, y
         #area2 = ax2.fill_between(x_values,under_2std,upper_2std, color='plum',alpha=0.5)
 
     ax2.set_xlim(x_values[0],x_values[-1])
-    ax2.set_xticks(ticks= np.array([1902,1920,1940,1960,1980,2000,2014]))
-    ax2.set_xticklabels([1900,1920,1940,1960,1980,2000,2015] )
+    ax2.set_xticks(ticks= xticks)
     #ax1.set_ylim(-0.4e20,1e20)
     ax2.set_ylabel('Energy [J]')
     ax2.set_title('Heat accumulation with redistribution', loc='right')
