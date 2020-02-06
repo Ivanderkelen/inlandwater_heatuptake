@@ -10,10 +10,7 @@ Main script for lake heat calculation and plotting
 
 # TO DO in the future: 
 # - handle heat content per lake layer 
-# - handle resampling issues (lake pct)
-# - correction for lake shape? 
 # - gldb lake depth no good assumption for reservoirs
-# -reservoir construction enabled only works until 2000: necessary to update lake_pct input data to newly GRanD files' climate 
 
 
 #%%
@@ -55,23 +52,22 @@ import geopandas as gpd
 
 flag_preprocess = False
 
-flag_interpolate_CLM45 = False # make interpolation of CLM temperature fields. (takes time)
+flag_interpolate_watertemp = False # make interpolation of CLM temperature fields. (takes time)
 
-flag_calcheat  = True # whether or not to calculate lake heat (otherwise use saved lake heat)
+flag_calcheat  = False # whether or not to calculate lake heat (otherwise use saved lake heat)
 
 # whether or not to save calculated lake heat (can only be true if flag_calcheat is true)
-flag_savelakeheat = True
+flag_savelakeheat = False
 
-flag_get_values = False
+flag_get_values = True
 
 flag_plotting_forcings = False
 
-flag_plotting_paper = True
+flag_plotting_paper = False 
 
 flag_plotting_input_maps = False
 
-flag_save_plots = False
-
+flag_save_plots = True
 # -----------------------------
 # scenarios
 
@@ -102,7 +98,7 @@ indir_lakedata   = basepath + 'data/isimip_laketemp/' # directory where lake fra
 # -----------------------------------------------------------
 # MODELS & FORCINGS
 
-models      = ['CLM45']#['SIMSTRAT-UoG']#'CLM45','VIC-LAKE','LAKE']
+models      = ['CLM45','SIMSTRAT-UoG']#,'VIC-LAKE','LAKE']
 forcings    = ['gfdl-esm2m','hadgem2-es','ipsl-cm5a-lr','miroc5']
 experiments = ['historical','future']
 
@@ -117,14 +113,14 @@ variables   = ['watertemp']
 start_year = 1896
 end_year = 2025
 
-years_grand            = range(1900,2025,1)
+years_grand            = range(1850,2018,1)
 years_analysis         = range(start_year,end_year,1)
 years_pi               = range(1861,1891,1)
 
 # depending on model 
 years_isimip = {}
 years_isimip['CLM45'] = range(1861,2099,1)
-years_isimip['SIMSTRAT-UoG'] = range(1891,2020,1)
+years_isimip['SIMSTRAT-UoG'] = range(1891,2030,1)
 
 
 # -----------------------------------------------------------
@@ -160,9 +156,10 @@ if flag_preprocess:
 # based on lakepct mask and saves interpolated watertemps into netcdf 
 # -------------------------------------------------------------------------
 
-if flag_interpolate_CLM45:
-    from interp_clm_watertemp import *
-    interp_clm_watertemp(indir_lakedata,outdir,forcings,future_experiment)  
+if flag_interpolate_watertemp:
+    from interp_watertemp import *
+    for model in models:
+        interp_watertemp(indir_lakedata,outdir,forcings,future_experiment,model)  
 
 
 #%%
@@ -194,28 +191,26 @@ else:
 
 if flag_get_values: 
     from get_values_lakeheat import * 
-    get_values()
+    get_values(outdir,flag_ref, years_analysis)
 
 #%%
 # -------------------------------------------------------------------------
 # PLOTTING
 # Do the plotting - works with internal flags
-# data aggregation is done from within scripts. 
+# data aggregation is done from within functions 
 # -------------------------------------------------------------------------
 
 if flag_plotting_forcings: 
     from plotting_lakeheat import * 
     plot_forcings(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, years_analysis,outdir)
-    plot_forcings_allmodels(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, years_analysis,outdir)
-
 
 if flag_plotting_paper: 
     from plotting_lakeheat import * 
     do_plotting(flag_save_plots, plotdir, models , forcings, lakeheat, flag_ref, years_analysis,outdir)
+    plot_forcings_allmodels(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, years_analysis,outdir)
 
 if flag_plotting_input_maps: # plotting of lake/reservoir area fraction and lake depth
     from plotting_globalmaps import *
     do_plotting_globalmaps(indir_lakedata, plotdir, years_grand,start_year,end_year)
 
-
-#%%
+    

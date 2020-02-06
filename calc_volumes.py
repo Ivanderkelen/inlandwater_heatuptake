@@ -48,6 +48,10 @@ def calc_depth_per_layer(flag_scenario, indir_lakedata, years_grand, start_year,
         outfile_annual = model.lower()+'_hadgem2-es_historical_rcp60_'+variable+'_1861_2099_annual.nc4'
         ds_lakelev = xr.open_dataset(outdir_model+outfile_annual,decode_times=False)
         lakelevdepth = ds_lakelev.depth.values
+        # not necessary to flip here. 
+        #lakelevdepth_nonflipped = ds_lakelev.depth.values
+        #lakelevdepth = np.flip(lakelevdepth_nonflipped,axis=1)
+
         # assume layer depth is at middle of layer
         layer_thickness = np.empty((np.size(lakelevdepth,0),np.size(lake_depth,0),np.size(lake_depth,1)))
         for lev in range(1,np.size(lakelevdepth,0)):
@@ -61,41 +65,42 @@ def calc_depth_per_layer(flag_scenario, indir_lakedata, years_grand, start_year,
 
     # expand lake depth dataset to also account for lake layers
     depth_per_layer     = layer_thickness_rel * lake_depth
-
+    
     return depth_per_layer
 
 
     
 def calc_lakeheat_area(resolution, indir_lakedata, flag_scenario, lakeheat_perarea,years_grand, start_year,end_year):   
     
-    lakepct_path          = indir_lakedata + 'mksurf_lake_0.5x0.5_hist_clm5_hydrolakes_1850-2017_c20191203.nc'
-    hydrolakes_lakepct  = xr.open_dataset(lakepct_path)
+    # see script test_resarea_sensitivity for sensitivity tests on different input datasets. 
+
+    # lakepct_path          = indir_lakedata + 'mksurf_lake_0.5x0.5_hist_clm5_hydrolakes_1900-2000_c20190826.nc'
+    lakepct_path       = indir_lakedata + 'mksurf_lake_0.5x0.5_hist_clm5_hydrolakes_1850-2017_c20191220.nc'
+    hydrolakes_lakepct = xr.open_dataset(lakepct_path)
     lake_pct           = hydrolakes_lakepct.PCT_LAKE.values/100 # to have then in fraction
 
     # Extract period of lake pct file 
-
-    # this should be removed when updating new reservoir file
-    end_year_res = 2000
+    end_year_res = 2017
 
     # take analysis years of lake_pct
-    lake_pct  = lake_pct[0:years_grand.index(end_year_res), :, :]
+    lake_pct  = lake_pct[years_grand.index(start_year):years_grand.index(end_year_res), :, :]
 
     # extend grand database for years before 1900
 
     
-    # this should be removed when updating new reservoir file
-    # extend lake_pct data set with values further than 2000: 
-    lake_1900 = lake_pct[0,:,:]
-    lake_1900 = lake_1900[np.newaxis,:,:]
-    lake_start_1900 = lake_1900
-    for ind,year in enumerate(np.arange(start_year+1,years_grand[0])):
-        lake_start_1900 = np.append(lake_start_1900,lake_1900,axis=0)
-    lake_pct= np.append(lake_start_1900,lake_pct,axis=0)
+    # # this should be removed when updating new reservoir file
+    # # extend lake_pct data set with values further than 2000: 
+    # lake_1900 = lake_pct[0,:,:]
+    # lake_1900 = lake_1900[np.newaxis,:,:]
+    # lake_start_1900 = lake_1900
+    # for ind,year in enumerate(np.arange(start_year+1,years_grand[0])):
+    #     lake_start_1900 = np.append(lake_start_1900,lake_1900,axis=0)
+    # lake_pct= np.append(lake_start_1900,lake_pct,axis=0)
 
 
-    # this should be removed when updating new reservoir file
-    # extend lake_pct data set with values further than 2000: 
-    lake_const=lake_pct[years_grand.index(end_year_res-1),:,:]
+    # # this should be removed when updating new reservoir file
+    # # extend lake_pct data set with values further than 2000: 
+    lake_const=lake_pct[-1,:,:]
     lake_const = lake_const[np.newaxis,:,:]
     for ind,year in enumerate(np.arange(end_year_res,end_year)):
         lake_pct= np.append(lake_pct,lake_const,axis=0)
@@ -103,15 +108,16 @@ def calc_lakeheat_area(resolution, indir_lakedata, flag_scenario, lakeheat_perar
     # calculate lake area per grid cell (m²)
     grid_area      = calc_grid_area(resolution)
     lake_area      = lake_pct * grid_area  
-
+    np.save('lake_area.npy',lake_area)
     # take lake area constant at 1900 level.
-    if flag_scenario == 'climate' : # in this scenario, volume per layer has only 3 dimensions
+    if flag_scenario == 'climate': # in this scenario, volume per layer has only 3 dimensions
 
         lake_area_endyear = lake_area[0,:,:]
         lakeheat_total = lakeheat_perarea * lake_area_endyear
 
     else:
-        lakeheat_total= lakeheat_perarea * lake_area
+        #lakeheat_total= lakeheat_perarea * lake_area
+        lakeheat_total = lakeheat_perarea * lake_area
 
     return lakeheat_total
 

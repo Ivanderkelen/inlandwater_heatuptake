@@ -38,10 +38,7 @@ def calc_lakeheat(models,forcings,future_experiment, indir_lakedata, years_grand
             variable = 'watertemp'                        
             outdir_model = outdir+variable+'/'+model+'/'
 
-            if model == 'CLM45': # load interpolated temperatures
-                outfile_annual = model.lower()+'_'+forcing+'_'+experiment+'_'+variable+'_interp_1861_2099'+'_'+'annual'+'.nc4'
-            else: 
-                outfile_annual = model.lower()+'_'+forcing+'_'+experiment+'_'+variable+'_1861_2099'+'_'+'annual'+'.nc4'
+            outfile_annual = model.lower()+'_'+forcing+'_'+experiment+'_'+variable+'_interp_1861_2099'+'_'+'annual'+'.nc4'
 
             # if simulation is available 
             if os.path.isfile(outdir_model+outfile_annual): 
@@ -57,14 +54,24 @@ def calc_lakeheat(models,forcings,future_experiment, indir_lakedata, years_grand
                     laketemp = laketemp[years_isimip[model].index(start_year):years_isimip[model].index(end_year),:,:,:]
 
                 lakeheat_layered =  rho_liq  * depth_per_layer * cp_liq * laketemp
-                
+
                 # add manual time dimension for reservoir scenario. 
                 if flag_scenario == 'reservoirs': lakeheat_layered = np.expand_dims(lakeheat_layered,axis=0)
 
+                # create a 2D mask to only give 0 to grid cells where there are or will be lakes (saving memory) 
+                mask_nan = np.isnan(lakeheat_layered[-1,:,:,:]).sum(axis=0)!=13
                 # sum up for total layer (less memory)
-                lakeheat_perarea = lakeheat_layered.sum(axis=1)
-                lakeheat_forcing = calc_lakeheat_area(resolution, indir_lakedata, flag_scenario, lakeheat_perarea,years_grand,start_year,end_year)
+                lakeheat_perarea = np.empty([lakeheat_layered.shape[0],lakeheat_layered.shape[2],lakeheat_layered.shape[3]])
+                for i in range(lakeheat_layered.shape[2]):
+                    for j in range(lakeheat_layered.shape[3]):
+                        if mask_nan[i,j]: 
+                            lakeheat_perarea[:,i,j] = np.nansum(lakeheat_layered[:,:,i,j],axis=1)
+                        else: 
+                            lakeheat_perarea[:,i,j] = np.nan
 
+                np.save('lakeheat_perarea.npy', np.flip(lakeheat_perarea,axis=1))
+
+                lakeheat_forcing = calc_lakeheat_area(resolution, indir_lakedata, flag_scenario,  np.flip(lakeheat_perarea,axis=1), years_grand,start_year,end_year)
                 # clean up
                 del laketemp, ds_laketemp, lakeheat_layered, lakeheat_perarea
 

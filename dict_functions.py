@@ -118,7 +118,7 @@ def ensmin_ts(indict):
         ens_summed[k] = np.nanmin(stacked,axis=0)
 
     stacked_per_model = np.stack(ens_summed.values())
-    ensmean_allmodels = np.nanmean(stacked_per_model,axis=0)
+    ensmean_allmodels = np.nanmin(stacked_per_model,axis=0)
     return ensmean_allmodels
 
 def ensmax_ts_per_model(indict):
@@ -144,7 +144,7 @@ def ensmax_ts(indict):
         ens_summed[k] = np.nanmax(stacked,axis=0)
 
     stacked_per_model = np.stack(ens_summed.values())
-    ensmean_allmodels = np.nanmean(stacked_per_model,axis=0)
+    ensmean_allmodels = np.nanmax(stacked_per_model,axis=0)
     return ensmean_allmodels
 
 
@@ -506,6 +506,26 @@ def load_riverheat(outdir):
     anom_ensmax = np.load(outdir+'riverheat/riverheat_ensmax.npy',allow_pickle='TRUE')
     anom_std = np.load(outdir+'riverheat/riverheat_std.npy',allow_pickle='TRUE')
     return (anom_ensmean, anom_ensmin, anom_ensmax, anom_std)
+
+
+def load_lakeheat_totalclimate(outdir,flag_ref, years_analysis):
+    lakeheat_climate = np.load(outdir+'lakeheat_climate.npy',allow_pickle='TRUE').item()
+    lakeheat_climate_anom = calc_anomalies(lakeheat_climate, flag_ref,years_analysis)
+    climate_anom_ensmean = moving_average(ensmean_ts(lakeheat_climate_anom))
+    climate_anom_std     = moving_average(ens_std_ts(lakeheat_climate_anom))
+
+    lakeheat_onlyresclimate = np.load(outdir+'lakeheat_onlyresclimate.npy',allow_pickle='TRUE').item()
+    lakeheat_onlyresclimate_anom = calc_anomalies(lakeheat_onlyresclimate, flag_ref,years_analysis)
+    onlyresclimate_anom_ensmean = moving_average(ensmean_ts(lakeheat_onlyresclimate_anom))
+    onlyresclimate_anom_std     = moving_average(ens_std_ts(lakeheat_onlyresclimate_anom))
+
+    riverheat_anom_ensmean = np.load(outdir+'riverheat/riverheat_ensmean.npy',allow_pickle='TRUE')
+    riverheat_anom_std = np.load(outdir+'riverheat/riverheat_std.npy',allow_pickle='TRUE')
+
+    totheat_climate = climate_anom_ensmean + onlyresclimate_anom_ensmean + riverheat_anom_ensmean
+    totheat_climate_std = climate_anom_std + onlyresclimate_anom_std + riverheat_anom_std
+
+    return (totheat_climate, totheat_climate_std)
 
 
 def calc_reservoir_warming(outdir):

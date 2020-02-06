@@ -36,8 +36,8 @@ indir_lakedata   = basepath + 'data/isimip_laketemp/' # directory where lake fra
 outdir = basepath + 'data/processed/'+ project_name
 flag_ref = 'pre-industrial'
 
-start_year = 1900
-end_year = 2017
+start_year = 1896
+end_year = 2025
 years_analysis         = range(start_year,end_year,1)
 
 
@@ -344,7 +344,7 @@ region_LGL = {
     'ax_location'     : [0.705 , 0.61,0.25  , 0.2 ],
     'name'            : 'LaurentianGreatLakes',          # replace by 'LaurentianGreatLakes' to define shapefile etc 
     'name_str'        : 'Laurentian Great Lakes', 
-    'levels'          :  np.arange(0,10e17,1e17),#np.arange(0,6.6e20,0.6e20),
+    'levels'          :  np.arange(0,8.5e17,0.5e17),#np.arange(0,6.6e20,0.6e20),
     'fig_size'         : (13,8),
     'cb_orientation'  : 'horizontal'
 }
@@ -387,9 +387,6 @@ region_GEL = {
     'cb_orientation'  : 'horizontal'
 }
 
-#%%
-
-#%%
 # Amazon region
 region_AM = {
     'extent'          : [-78,-10,-48,3.5], # original extent [27.5,-9,36,2.5]
@@ -406,11 +403,11 @@ region_AM = {
 
 #%% actual figure creation
 
-plot_region_hc_map(lakeheat_anom_spmean, region_LGL, lakes_path, indir_lakedata)
+plot_region_hc_map(np.flipud(lakeheat_anom_spmean), region_LGL, lakes_path, indir_lakedata)
 
-plot_region_hc_map(lakeheat_anom_spmean, region_AGL, lakes_path, indir_lakedata)
+plot_region_hc_map(np.flipud(lakeheat_anom_spmean), region_AGL, lakes_path, indir_lakedata)
 
-plot_region_hc_map(lakeheat_anom_spmean, region_GEL, lakes_path, indir_lakedata)
+plot_region_hc_map(np.flipud(lakeheat_anom_spmean), region_GEL, lakes_path, indir_lakedata)
 
 plot_region_hc_rivers_map(riverheat_anom_spmean, region_AM, indir_lakedata)
 
@@ -421,10 +418,20 @@ plot_global_hc_map('global',lakeheat_anom_spmean, lakes_path, indir_lakedata)
 #%% Functions for time series plotting
 
 
-def calc_region_hc_ts(lakeheat, lakes_path, region_props, indir_lakedata, flag_ref, years_analysis):
+def calc_region_hc_ts(lakeheat_in, lakes_path, region_props, indir_lakedata, flag_ref, years_analysis):
     """ Calculate the timeseries of the regions heat content, weighted by lake pct of shapefile
     input: lakeheat dictionary """
  
+    # lake heat: flip lats
+    lakeheat = {}
+    temp = {}
+    for k in lakeheat_in: 
+        for f in lakeheat_in[k]:
+            temp[f] = np.flip(lakeheat_in[k][f],axis=1)
+        lakeheat[k] = temp
+
+
+
     extent            = region_props['calc_extent']
     name              = region_props['name']
 
@@ -441,9 +448,34 @@ def calc_region_hc_ts(lakeheat, lakes_path, region_props, indir_lakedata, flag_r
     
     # calculate anomaly for extracted lake region
     lakeheat_wgt_anom =  calc_anomalies(lakeheat_wgt_region, flag_ref,years_analysis)
-
     return lakeheat_wgt_anom
 
+
+# -----------------------------------------------------
+#plot the figure  timeseries of heat uptake by individual lake
+def getvalues_region_hc_ts(region_props,lakeheat_wgt_anom):
+
+    # define over how many years back you want to calculate the uptake:
+    years_increase = 10
+
+    # define number of years over which to calculate the trend 
+    years_trend = 30
+
+    # get region specific properties from dictionary
+    name_str          = region_props['name_str']
+
+    lakeheat_region_ensmean_ts  = moving_average(ensmean_ts(lakeheat_wgt_anom))
+    lakeheat_region_std_ts      = moving_average(ens_std_ts(lakeheat_wgt_anom))
+
+    # calculate total heat content increase
+    
+    total_heatcontent_increase = np.mean(lakeheat_region_ensmean_ts[-years_increase:-1])
+    total_heatcontent_std      = np.mean(lakeheat_region_std_ts[-years_increase:-1])
+    total_heatcontent_trend    = (lakeheat_region_ensmean_ts[-1]-lakeheat_region_ensmean_ts[-years_trend])/years_trend
+
+    print(name_str+' heat uptake  '+ str(total_heatcontent_increase))  
+    print(name_str+' stdev '       + str(total_heatcontent_std )  )
+    print(name_str+' trend  '+ str(total_heatcontent_trend)  )
 
 
 # -----------------------------------------------------
@@ -476,8 +508,8 @@ def plot_region_hc_ts(ax1,flag_uncertainty,region_props,lakeheat_wgt_anom, label
         area2 = ax1.fill_between(x_values,under_2std,upper_2std, color=colors[1],alpha=0.5)
 
     ax1.set_xlim(x_values[0],x_values[-1])
-    ax1.set_xticks(ticks= np.array([1902,1920,1940,1960,1980,2000,2014]))
-    ax1.set_xticklabels([1900,1920,1940,1960,1980,2000,2015] )
+    ax1.set_xticks(ticks= np.array([1902,1920,1940,1960,1980,2000,2020]))
+    ax1.set_xticklabels([1900,1920,1940,1960,1980,2000,2020] )
     #ax1.set_ylim(-0.4e20,1e20)
     ax1.set_ylabel('Energy [J]')
     ax1.set_title(name_str, loc='right')
@@ -493,7 +525,7 @@ mpl.rc('axes',titlesize=14)
 mpl.rc('axes',labelsize=12)
 
 
-flag_uncertainty = '2std' # or '2std' or 'envelope'
+flag_uncertainty = 'envelope' # or '2std' or 'envelope'
 
 # Laurentian Great Lakes
 f,(ax1,ax2,ax3,ax4) = plt.subplots(4,1,figsize=(6,14))
@@ -527,6 +559,20 @@ plotdir='/home/inne/documents/phd/data/processed/isimip_lakeheat/plots/'
 plt.savefig(plotdir+'regions_hc_ts.png')
 
 
+
+#%%
+# print values
+lakeheat_wgt_anom = calc_region_hc_ts(lakeheat_climate, lakes_path, region_LGL, indir_lakedata, flag_ref,years_analysis)
+getvalues_region_hc_ts(region_LGL,lakeheat_wgt_anom)
+
+lakeheat_wgt_anom = calc_region_hc_ts(lakeheat_climate, lakes_path, region_AGL, indir_lakedata, flag_ref,years_analysis)
+getvalues_region_hc_ts(region_AGL,lakeheat_wgt_anom)
+
+lakeheat_wgt_anom = calc_region_hc_ts(lakeheat_climate, lakes_path, region_GEL, indir_lakedata, flag_ref,years_analysis)
+getvalues_region_hc_ts(region_GEL,lakeheat_wgt_anom)
+
+riverheat_region_anom = np.load(outdir+'riverheat/riverheat_amazon_anom.npy').item() 
+getvalues_region_hc_ts(region_AM,riverheat_region_anom)
 
 
 #%%

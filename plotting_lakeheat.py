@@ -56,7 +56,7 @@ def plot_forcings(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref,
 
             line_zero = ax[nplot].plot(x_values, np.zeros(np.shape(x_values)), linewidth=0.5,color='darkgray')
             line1 = ax[nplot].plot(x_values,lakeheat_anom_ts[model][forcing], color='coral')
-            ax[nplot].set_xlim(x_values[0],x_values[-1])
+            ax[nplot].set_xlim(1900,2020)
             ax[nplot].set_xticks(ticks=xticks)
             #ax[nplot].set_ylim(-6e20,8e20)
             ax[nplot].set_ylabel('Energy [J]')
@@ -71,7 +71,7 @@ def plot_forcings(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref,
 
 def plot_forcings_allmodels(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, years_analysis,outdir):
 
-    xticks = np.array([1900,1920,1940,1960,1980,2000,2020])
+    xticks = np.array([1900,1940,1980,2020])
 
 
         #%% Plot raw heat uptake per model forcing 
@@ -84,7 +84,7 @@ def plot_forcings_allmodels(flag_save_plots, plotdir, models,forcings, lakeheat,
     # all forcings in a row per list of models 
     nmodels = len(lakeheat)
     nforcings = len(lakeheat[list(lakeheat.keys())[0]])
-    f,ax = plt.subplots(nmodels,nforcings, figsize=(2*nmodels,4*nforcings))
+    f,ax = plt.subplots(nmodels,nforcings, figsize=(12,5))
     x_values = np.asarray(years_analysis)
     labels = ['(a)','(b)','(c)','(d)','(e)','(f)','(g)','(h)','(i)','(j)','(k)', '(l)','(m)','(n)','(o)','(p)','(q)','(r)','(s)']
 
@@ -96,16 +96,21 @@ def plot_forcings_allmodels(flag_save_plots, plotdir, models,forcings, lakeheat,
 
             line_zero = ax[nplot].plot(x_values, np.zeros(np.shape(x_values)), linewidth=0.5,color='darkgray')
             line1 = ax[nplot].plot(x_values,lakeheat_anom_ts[model][forcing], color='coral')
-            ax[nplot].set_xlim(x_values[0],x_values[-1])
+            ax[nplot].set_xlim(1900,2020)
+            #ax[nplot].set_ylim(-0.22e19,0.82e19)
             ax[nplot].set_xticks(ticks=xticks)
-            #ax[nplot].set_ylim(-6e20,8e20)
-            ax[nplot].set_ylabel('Energy [J]')
-            ax[nplot].set_title(model +'     '+forcing, loc='right')
+            if model == 'CLM45': ax[nplot].set_ylim(-7e20,9e20)
+            if model == 'SIMSTRAT-UoG': ax[nplot].set_ylim(-0.4e20,1.9e20)
+
+            if nplot == 0 or nplot ==4: ax[nplot].set_ylabel('Energy [J]')
+            if nplot < 4: ax[nplot].set_title(forcing, loc='right')
             ax[nplot].text(0.02, 0.90, labels[nplot], transform=ax[nplot].transAxes, fontsize=12)
 
             nplot = nplot+1
 
-    f.tight_layout(rect=[0, 0.03, 1, 0.95])
+    f.tight_layout()#rect=[0, 0.03, 1, 0.95])
+    plt.text(-0.02, 0.93, models[0], fontsize=14, transform=plt.gcf().transFigure, fontweight = 'bold')       
+    plt.text(-0.09, 0.46, models[1], fontsize=14, transform=plt.gcf().transFigure, fontweight = 'bold')            
 
     if flag_save_plots:
        plt.savefig(plotdir+'heat_acc_per_forcing'+'.png',dpi=300)
@@ -120,6 +125,7 @@ def do_plotting(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, y
     # ------------------------------------------------
     # load saved heat storages for different scenarios
 
+    print('Loading variables for plotting ...')
     # only climate
     (lakeheat_climate_anom_ensmean_ts, 
         lakeheat_climate_anom_ensmin_ts, 
@@ -137,8 +143,7 @@ def do_plotting(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, y
         lakeheat_both_anom_ensmin_ts, 
         lakeheat_both_anom_ensmax_ts,
         lakeheat_both_anom_std_ts ) = load_lakeheat('both',outdir, flag_ref, years_analysis)
-
-
+        
     # calculate reservoir warming (difference total and (climate+reservoir expansion))
     calc_reservoir_warming(outdir)
 
@@ -251,27 +256,46 @@ def do_plotting(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, y
     colors_rivers = ['lightseagreen','mediumturquoise']
     colors_natlak = ['coral','sandybrown']
     colors_onlyres = ['steelblue','skyblue']
-
+    colors_total='darkslateblue'
 
     # functions 
     def add_arrow_value(ax,y1,y2,ar_color,ar_text,  flag_onlyres=False, y1_textpos_toadd =0.05e21,flag_gobelow=False):
-        y_half = (y2-y1)/2
-        x_pos = 1.03
+        y_half = (abs(y2)-abs(y1))/2
+        x_pos = 1.04
+        x_pos_tex = 1.04
+
         y1_textpos = y1- y1_textpos_toadd
         
         if flag_gobelow:
             ax.annotate('', xy=(x_pos-0.02,-0.05e21), xycoords=("axes fraction","data"), xytext=(x_pos+0.02, -0.25e21), 
                     arrowprops=dict(arrowstyle="<-", color=ar_color,linewidth=1.5))
-            ax.annotate(ar_text+'%', xy=(x_pos+0.02, y1_textpos+0.2), xycoords=("axes fraction","data"), xytext=(x_pos+0.02,-0.25e21), fontsize=12)
+            ax.annotate(ar_text+'%', xy=(x_pos_tex+0.02, y1_textpos+0.2), xycoords=("axes fraction","data"), xytext=(x_pos_tex+0.02,-0.25e21), fontsize=12)
         
-        elif flag_onlyres: 
+        elif flag_onlyres==1: #only reservoirs fig 1 
+            x_pos = 1.03
+
             ax.annotate('', xy=(x_pos-0.02, -0.5), xycoords=("axes fraction","data"), xytext=(x_pos+0.02, y1), 
                     arrowprops=dict(arrowstyle="<-", color=ar_color,linewidth=1.5))
-            ax.annotate(ar_text+'%', xy=(x_pos+0.02, y1_textpos), xycoords=("axes fraction","data"), xytext=(x_pos+0.02, y1_textpos), fontsize=12)
+            ax.annotate(ar_text+'%', xy=(x_pos_tex+0.02, y1_textpos), xycoords=("axes fraction","data"), xytext=(x_pos_tex+0.02, y1_textpos+0.2), fontsize=12)
+        elif flag_onlyres==2: #only reservoirs fig 2 
+            x_pos = 1.03
+            print(ar_text)
+            ax.annotate('', xy=(x_pos-0.02, -0.5), xycoords=("axes fraction","data"), xytext=(x_pos+0.02, y1), 
+                    arrowprops=dict(arrowstyle="<-", color=ar_color,linewidth=1.5))
+            ax.annotate(ar_text+'%', xy=(x_pos_tex+0.02, y1_textpos-0.1e21), xycoords=("axes fraction","data"), xytext=(x_pos_tex+0.02, y1_textpos-0.03e21), fontsize=12)
+        
+       
         elif y2-y1 > 0.01e21:
+            x_pos = 1.04
             ax.annotate('', xy=(x_pos, y1), xycoords=("axes fraction","data"), xytext=(x_pos, y2), 
                     arrowprops=dict(arrowstyle="<->", color=ar_color,linewidth=1.5))
-            ax.annotate(ar_text+'%', xy=(x_pos+0.02, y1), xycoords=("axes fraction","data"), xytext=(x_pos+0.02, y_half), fontsize=12)
+            ax.annotate(ar_text+'%', xy=(x_pos_tex+0.02, y1), xycoords=("axes fraction","data"), xytext=(x_pos_tex+0.02, y_half), fontsize=12)
+        elif y2-y1 < -0.1e20: # rivers in fig 1
+            x_pos = 1.02
+            ax.annotate('', xy=(x_pos, y1), xycoords=("axes fraction","data"), xytext=(x_pos, y2), 
+                    arrowprops=dict(arrowstyle="<->", color=ar_color,linewidth=1.5))
+            ax.annotate(ar_text+'%', xy=(x_pos_tex+0.02, y1-0.1e20), xycoords=("axes fraction","data"), xytext=(x_pos_tex+0.02, -y_half-0.1e20), fontsize=12)
+ 
 
         else:
             ax.annotate('', xy=(x_pos-0.02, y1), xycoords=("axes fraction","data"), xytext=(x_pos+0.02, y1), 
@@ -280,7 +304,7 @@ def do_plotting(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, y
 
 
     # plotting
-    flag_uncertainty = '2std' # or '2std' or 'envelope'
+    flag_uncertainty = 'envelope' # or '2std' or 'envelope'
 
     f,(ax1,ax2) = plt.subplots(1,2,figsize=(12,4))
     x_values = moving_average(np.asarray(years_analysis))
@@ -293,6 +317,9 @@ def do_plotting(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, y
     a2 = riverheat_anom_ensmean_ts
     a3 = lakeheat_climate_anom_ensmean_ts
     a4 = lakeheat_res_anom_ensmean_ts
+    # a1 = lakeheat_onlyresclimate_anom_ensmean_ts
+    # a2 = lakeheat_climate_anom_ensmean_ts
+    # a3 = lakeheat_res_anom_ensmean_ts
 
     # reservoirs climate change
     line1, = ax1.plot(x_values,a1, color=colors_res[0])
@@ -302,9 +329,9 @@ def do_plotting(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, y
     #area2  = ax1.fill_between(x_values,lakeheat_onlyresclimate_anom_ensmean_ts,lakeheat_onlyresclimate_anom_ensmean_ts+lakeheat_climate_anom_ensmean_ts, color='sandybrown')
 
     # natural lakes
-    line3, = ax1.plot(x_values,a1+a2+a3, color=colors_natlak[0])
+    line3, = ax1.plot(x_values,a1+a2+a3, color=colors_total)
     #area3  = ax1.fill_between(x_values,riverheat_anom_ensmean_ts,lakeheat_onlyresclimate_anom_ensmean_ts+lakeheat_climate_anom_ensmean_ts+riverheat_anom_ensmean_ts, color='lightsteelblue')
-   
+
     area3 = ax1.fill_between(x_values,a1+a2,a1+a2+a3, color=colors_natlak[1])
     area2 = ax1.fill_between(x_values,a1,a1+a2, color=colors_rivers[1])
     area1 = ax1.fill_between(x_values,a1, color=colors_res[1])
@@ -324,7 +351,7 @@ def do_plotting(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, y
     #ax1.set_ylim(-0.4e20,1e20)
     ax1.set_ylabel('Energy [J]')
     ax1.set_title('Heat accumulation from climate change', loc='right')
-    ax1.legend((area1,area3,area2),['reservoir heat uptake','natural lake heat uptake','river heat uptake'],frameon=False,loc='upper left', bbox_to_anchor = (0.01,0.92))
+    ax1.legend((area1,area3,area2, line3),['reservoir heat uptake','natural lake heat uptake','river heat uptake','total heat uptake'],frameon=False,loc='upper left', bbox_to_anchor = (0.01,0.92),prop={"size":11})
 
     ax1.text(0.03, 0.92, '(a)', transform=ax1.transAxes, fontsize=14)
 
@@ -341,14 +368,15 @@ def do_plotting(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, y
     add_arrow_value(ax1,y1,y2,colors_natlak[0],str(clim_frac))
 
     # rivers
-    y1 = a1[-1]-0.05e20
-    y2 = y1+a2[-1]+0.2e20
-    add_arrow_value(ax1,y1,y2,colors_rivers[0],str(river_frac))
+    y1 = a1[-1]
+    y2 = y1+a2[-1]
+    print(y2-y1)
+    add_arrow_value(ax1,y1-0.1e20,y2,colors_rivers[0],str(river_frac))
    
     # resclim
     y1 = 0
     y2 = a1[-1]
-    add_arrow_value(ax1,y1,y2,colors_res[0],str(resclim_frac),flag_onlyres=True,y1_textpos_toadd=0.015e21)
+    add_arrow_value(ax1,y1,y2,colors_res[0],str(resclim_frac),flag_onlyres=1,y1_textpos_toadd=0.005e21)
 
 
     # -------------------------------------
@@ -359,7 +387,7 @@ def do_plotting(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, y
     line1, = ax2.plot(x_values,a1, color=colors_res[0])
     line2, = ax2.plot(x_values,a1+a2, color=colors_rivers[0])
     line3, = ax2.plot(x_values,a1+a2+a3, color=colors_natlak[0])
-    line4, = ax2.plot(x_values,a1+a2+a3+a4, color=colors_onlyres[0])
+    line4, = ax2.plot(x_values,a1+a2+a3+a4, color=colors_total)
 
 
     area4 = ax2.fill_between(x_values,a1+a2+a3,a1+a2+a3+a4, color=colors_onlyres[1])   
@@ -390,7 +418,7 @@ def do_plotting(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, y
     ax2.set_ylabel('Energy [J]')
     ax2.set_title('Heat accumulation with redistribution', loc='right')
     ax2.text(0.03, 0.92, '(b)', transform=ax2.transAxes, fontsize=14)
-    ax2.legend((area3,area2,area1,area4),['natural lake heat uptake','reservoir heat uptake', 'river heat uptake', 'reservoir expansion'],frameon=False,loc='upper left', bbox_to_anchor = (0.01,0.92))
+    ax2.legend((area3,area2,area1,area4,line4),['natural lake heat uptake','reservoir heat uptake', 'river heat uptake', 'reservoir expansion', 'total uptake and expansion'],frameon=False,loc='upper left', bbox_to_anchor = (0.01,0.92), prop={"size":11})
 
     total = (lakeheat_climate_anom_ensmean_ts+lakeheat_onlyresclimate_anom_ensmean_ts+lakeheat_res_anom_ensmean_ts+riverheat_anom_ensmean_ts)
     res_frac = np.round(lakeheat_res_anom_ensmean_ts[-1]/total[-1] *100,1)
@@ -407,22 +435,23 @@ def do_plotting(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, y
     # clim only
     y1 = a1[-1]+a2[-1]
     y2 = y1+a3[-1]
-    add_arrow_value(ax2,y1,y2,colors_natlak[0],str(clim_frac))
-
-    # resclim
-    y1 = 0
-    y2 = a1[-1]
-    add_arrow_value(ax2,y1,y2,colors_res[0],str(resclim_frac),flag_onlyres=True,y1_textpos_toadd=0.015e21,flag_gobelow=True)
+    add_arrow_value(ax2,y1+0.08e21,y2+0.08e21,colors_natlak[0],str(clim_frac))
 
     # river
+    y1 = 0
+    y2 = a1[-1]
+    add_arrow_value(ax2,y1,y2,colors_rivers[0],str(river_frac),flag_onlyres=False,y1_textpos_toadd=0.025e21,flag_gobelow=True)
+
+    # resclim
     y1 = a1[-1]
     y2 =y1+a2[-1]
-    add_arrow_value(ax2,y1,y2,colors_rivers[0],str(river_frac),flag_onlyres=True)
+    add_arrow_value(ax2,y1,y2,colors_res[0],str(resclim_frac),flag_onlyres=2,y1_textpos_toadd=0.025e21)
 
 
     #f.suptitle('Reference period 1900-1929, 5 year moving average')
     plt.tight_layout()
     if flag_save_plots:
         plt.savefig(plotdir+'fig2_heat_acc'+'.png',dpi=300)
+
 
 #%%

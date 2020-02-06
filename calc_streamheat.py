@@ -32,7 +32,7 @@ from dict_functions import *
 flag_preprocess = False 
 
 flag_saveriverheat = True
-flag_saveriverheat_forAmazon = True
+flag_saveriverheat_forAmazon = False
 # Reference to which period/year anomalies are calculated
 flag_ref = 'pre-industrial' # 'pre-industrial': first 30 years (1900-1929 for start_year =1900)
 
@@ -50,7 +50,7 @@ plotdir=  basepath + '/data/processed/isimip_lakeheat/plots/'
 models      = ['WaterGAP2',  'MATSIRO'    ]
 scenarios   = ['histsoc_co2', '2005soc_co2'] # order need to be corresponding to models
 
-forcings    = ['gfdl-esm2m', 'hadgem2-es', 'ipsl-cm5a-lr', 'miroc5']
+forcings    = ['hadgem2-es', 'ipsl-cm5a-lr', 'miroc5']#
 
 experiments = ['historical','future']
 future_experiment = 'rcp60' 
@@ -231,9 +231,6 @@ def calc_region_riverhc_ts(riverheat, region_props, indir_lakedata, flag_ref,yea
 
 
 if flag_saveriverheat_forAmazon: 
-    
-    del rivertemp, rivermass
-
 
     riverheat_ensmean = ens_spmean_ensmean(riverheat)
 
@@ -379,32 +376,6 @@ mpl.rc('axes',labelsize=12)
 mpl.rc('legend',fontsize='large')
 mpl.rc('text',color='dimgrey')
 
-#%%
-# lineplot of one model anomaly- all forcings 5-year moving average
-colors_primary = ['deepskyblue','coral']
-colors_secondary = ['lightskyblue', 'sandybrown']
-
-
-f,ax = plt.subplots(figsize=(7,4))
-
-x_values = moving_average(np.asarray(years_analysis))
-
-line_zero = ax.plot(x_values, np.zeros(np.shape(x_values)), linewidth=0.5,color='darkgray')
-
-for ind_mod, model in enumerate(models):
-    line2 = ax.plot(x_values,riverheat_anom_ensmax_ts[model], color=colors_secondary[ind_mod])
-    line3 = ax.plot(x_values,riverheat_anom_ensmin_ts[model], color=colors_secondary[ind_mod])
-    area1 = ax.fill_between(x_values,riverheat_anom_ensmin_ts[model],riverheat_anom_ensmax_ts[model], color=colors_secondary[ind_mod])
-
-    ax.plot(x_values,riverheat_anom_ensmean_ts[model], color=colors_primary[ind_mod])
-
-ax.set_xlim(x_values[0],x_values[-1])
-#ax.set_ylim(-4e19,10e19)
-#ax.grid(color='lightgrey')
-ax.set_ylabel('Energy [J]')
-ax.set_title('River heat content anomalies (reference 1900-1929)', pad=15)
-
-plt.savefig(plotdir+'riverheat_anom1900_5yav'+'.png',dpi=300)
 
 
 #%%
@@ -478,15 +449,16 @@ for model in models:
 
 #%% Make supplementary figure 
 
-var = riverheat_anom_ts
-ylim  = (-0.7e21,1.6e21)
-ylabel = 'Energy [J]'
-clr = 'olive'
+var3 = riverheat_anom_ts
+ylim3  = (-0.7e21,1.6e21)
+ylabel3 = 'Energy [J]'
+clr3 = 'coral'
 figname = 'riverheat_per_forcing_2mods'
 
 f,ax = plt.subplots(2,4, figsize=(13,6))
 x_values = np.asarray(years_analysis)
-labels = ['(a)','(b)','(c)','(d)','(e)','(f)','(g)','(h)']
+labels = ['(m)','(n)','(o)','(p)','(q)','(r)','(s)','(t)']
+
 
 ax = ax.ravel()
 
@@ -497,15 +469,15 @@ for model in models:
     for forcing in forcings:
 
         line_zero = ax[nplot].plot(x_values, np.zeros(np.shape(x_values)), linewidth=0.5,color='darkgray')
-        line1 = ax[nplot].plot(x_values,var[model][forcing], color=clr)
+        line1 = ax[nplot].plot(x_values,var3[model][forcing], color=clr3)
         ax[nplot].set_xlim(x_values[0],x_values[-1])
-        ax[nplot].set_ylim(ylim)
+        ax[nplot].set_ylim(ylim3)
         ax[nplot].text(0.02, 0.90, labels[nplot], transform=ax[nplot].transAxes, fontsize=12)
         
 
         # only plot ylabel in first column 
         if (nplot/4).is_integer(): 
-            ax[nplot].set_ylabel(ylabel)
+            ax[nplot].set_ylabel(ylabel3)
 
         # plot forcings only at the top row
         if nplot < 4: 
@@ -536,13 +508,13 @@ ylabel2 = 'Temperature [K]'
 ylim2  = (-0.3,1)
 clr2 = 'brown'
 
+
 figname = 'rivermass_and_temp_per_forcing_2mods'
 
 
 f,ax = plt.subplots(3,4, figsize=(12,8))
 x_values = np.asarray(years_analysis)
 labels = ['(a)','(b)','(c)','(d)','(e)','(f)','(g)','(h)','(i)','(j)','(k)', '(l)']
-
 ax = ax.ravel()
 
 nplot = 0
@@ -580,10 +552,9 @@ for model in models:
         nplot=nplot+1
 
 
-
-
     #f.suptitle(model+' river mass anomalies (reference 1900-1929)', fontsize=16)
 f.tight_layout(rect=[0, 0.03, 1, 0.95])
+plt.text(-0.065, 0.92, 'Punzet et al. (2012)', fontsize=14, transform=plt.gcf().transFigure, fontweight = 'bold')            
 plt.text(-0.065, 0.62, models[0], fontsize=14, transform=plt.gcf().transFigure, fontweight = 'bold')            
 plt.text(-0.065, 0.31, models[1], fontsize=14, transform=plt.gcf().transFigure, fontweight = 'bold')       
 
