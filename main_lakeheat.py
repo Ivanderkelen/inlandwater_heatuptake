@@ -1,17 +1,13 @@
 """
 Author      : Inne Vanderkelen (inne.vanderkelen@vub.be)
 Institution : Vrije Universiteit Brussel (VUB)
-Date        : June 2019
+Date        : November 2019
 
-Main script for lake heat calculation and plotting
+Main script for heat calculation and plotting
 
+to do: integrate river heat calculations in main script and plotting casestudies script. Also get scripts from cluster
 
 """
-
-# TO DO in the future: 
-# - handle heat content per lake layer 
-# - gldb lake depth no good assumption for reservoirs
-
 
 #%%
 # -------------------------------------------------------------------------
@@ -209,6 +205,8 @@ if flag_plotting_paper:
     from plotting_lakeheat import * 
     do_plotting(flag_save_plots, plotdir, models , forcings, lakeheat, flag_ref, years_analysis,outdir)
     plot_forcings_allmodels(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, years_analysis,outdir)
+
+    # add here plotting for plotting case studies
 
 if flag_plotting_input_maps: # plotting of lake/reservoir area fraction and lake depth
     from plotting_globalmaps import *

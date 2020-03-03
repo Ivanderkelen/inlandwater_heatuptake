@@ -78,6 +78,7 @@ rho_ice = 0.917e3  #[kg/m³] density ice
 
 #%%
 # preprocess river storage files
+# see also preprocess_rivertemp.py file. 
 
 if flag_preprocess: 
     for model in models:
