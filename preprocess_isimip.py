@@ -77,8 +77,8 @@ def preprocess_isimip(models, forcings, variables, experiments, future_experimen
                    
                    # account for levlak same variable name
                     if model == 'SIMSTRAT-UoG':
-                    cdo.chname('input=levlak,depth '+outdir_model+outfile_assembled output=outdir_model+outfile_assembled+'1')
-                    os.system('mv '+outdir_model+outfile_assembled+'1' +' '+outdir_model+outfile_assembled)
+                        cdo.chname('input=levlak,depth '+outdir_model+outfile_assembled, output=outdir_model+outfile_assembled+'1')
+                        os.system('mv '+outdir_model+outfile_assembled+'1' +' '+outdir_model+outfile_assembled)
 
                 # calculate ensemble mean forcing for each model (if not done so)
                 outfile_ensmean = model.lower()+'_historical_'+future_experiment+'_'+variable+'_'+'1861_2005'+'_'+'annual'+'_'+'ensmean'+'.nc4'

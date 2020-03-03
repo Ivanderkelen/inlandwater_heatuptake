@@ -52,6 +52,7 @@ import geopandas as gpd
 
 flag_preprocess = False
 
+
 flag_interpolate_watertemp = False # make interpolation of CLM temperature fields. (takes time)
 
 flag_calcheat  = False # whether or not to calculate lake heat (otherwise use saved lake heat)
@@ -59,7 +60,7 @@ flag_calcheat  = False # whether or not to calculate lake heat (otherwise use sa
 # whether or not to save calculated lake heat (can only be true if flag_calcheat is true)
 flag_savelakeheat = False
 
-flag_get_values = True
+flag_get_values = False
 
 flag_plotting_forcings = False
 
@@ -67,12 +68,12 @@ flag_plotting_paper = False
 
 flag_plotting_input_maps = False
 
-flag_save_plots = True
+flag_save_plots = False
 # -----------------------------
 # scenarios
 
 # flag to set which scenario is used for heat calculation
-flag_scenario = 'reservoirs'        # 'climate'    : only climate change (lake cover constant at 2005 level)
+flag_scenario = 'climate'        # 'climate'    : only climate change (lake cover constant at 2005 level)
                               # 'reservoirs' : only reservoir construction (temperature constant at 1900 level)
                               # 'both'       : reservoir construction and climate
 
@@ -98,7 +99,7 @@ indir_lakedata   = basepath + 'data/isimip_laketemp/' # directory where lake fra
 # -----------------------------------------------------------
 # MODELS & FORCINGS
 
-models      = ['CLM45','SIMSTRAT-UoG']#,'VIC-LAKE','LAKE']
+models      = ['CLM45']#,'SIMSTRAT-UoG']#,'VIC-LAKE','LAKE']
 forcings    = ['gfdl-esm2m','hadgem2-es','ipsl-cm5a-lr','miroc5']
 experiments = ['historical','future']
 
@@ -119,7 +120,7 @@ years_pi               = range(1861,1891,1)
 
 # depending on model 
 years_isimip = {}
-years_isimip['CLM45'] = range(1861,2099,1)
+years_isimip['CLM45'] = range(1891,2030,1)
 years_isimip['SIMSTRAT-UoG'] = range(1891,2030,1)
 
 
@@ -133,8 +134,8 @@ cp_liq = 4.188e3   # [J/kg K] heat capacity liquid water
 cp_ice = 2.11727e3 # [J/kg K] heat capacity ice
 cp_salt= 3.993e3   #[J/kg K] heat capacity salt ocean water (not used)
 
-rho_liq = 1000     # [kg/m²] density liquid water
-rho_ice = 0.917e3  # [kg/m²] density ice
+rho_liq = 1000     # [kg/m2] density liquid water
+rho_ice = 0.917e3  # [kg/m2] density ice
 
 
 #%%
@@ -173,7 +174,7 @@ if flag_calcheat:
     from calc_lakeheat import *
 
     #volume_per_layer = calc_volume_per_layer(flag_scenario, indir_lakedata, years_grand, start_year,end_year, resolution, models,outdir)
-    lakeheat = calc_lakeheat(models,forcings,future_experiment, indir_lakedata, years_grand, resolution,outdir, years_isimip,start_year, end_year, flag_scenario, flag_savelakeheat, rho_liq, cp_liq)
+    lakeheat = calc_lakeheat(models,forcings,future_experiment, indir_lakedata, years_grand, resolution,outdir, years_isimip,start_year, end_year, flag_scenario, flag_savelakeheat, rho_liq, cp_liq, rho_ice, cp_ice)
 
 else: 
     # load from file based on scenario: 
@@ -214,3 +215,4 @@ if flag_plotting_input_maps: # plotting of lake/reservoir area fraction and lake
     do_plotting_globalmaps(indir_lakedata, plotdir, years_grand,start_year,end_year)
 
     
+

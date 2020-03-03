@@ -10,6 +10,7 @@ Main subroutine to do get values for lake heat calculations
 import csv
 import os 
 from dict_functions import *
+from sklearn.linear_model import LinearRegression
 
 
 def get_values(outdir, flag_ref, years_analysis):
@@ -22,7 +23,7 @@ def get_values(outdir, flag_ref, years_analysis):
     years_increase = 10
 
     # define number of years over which to calculate the trend 
-    years_trend = 30
+    years_trend = 31
 
 
     # load values 
@@ -52,8 +53,18 @@ def get_values(outdir, flag_ref, years_analysis):
         print(heat_anom_ensmean_ts.size)
         total_heatcontent_increase = np.mean(heat_anom_ensmean_ts[-years_increase:-1])
         total_heatcontent_std      = np.mean(heat_anom_std_ts[-years_increase:-1])
-        total_heatcontent_trend    = (heat_anom_ensmean_ts[-1]-heat_anom_ensmean_ts[-years_trend])/years_trend
-        
+
+
+        # calculate trend - last 30 years. 
+        linregmodel = LinearRegression() # normalize=True? 
+        x = np.arange(1,years_trend).reshape(-1,1)
+        linregmodel.fit(x,heat_anom_ensmean_ts[-years_trend:-1])
+
+        total_heatcontent_trend    = linregmodel.coef_
+
+
+        # 1900-1930. 
+
         # save the calculations in a dict
         dict_values = {'Scenario':scenario, 
                         'Lake heat increase [J]': total_heatcontent_increase, 
