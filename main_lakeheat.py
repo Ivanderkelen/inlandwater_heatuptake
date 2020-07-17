@@ -5,8 +5,6 @@ Date        : November 2019
 
 Main script for heat calculation and plotting
 
-to do: integrate river heat calculations in main script and plotting casestudies script. Also get scripts from cluster
-
 """
 
 #%%
@@ -17,24 +15,14 @@ to do: integrate river heat calculations in main script and plotting casestudies
 import os 
 import sys
 
-# settings for windows or linux machine (for paths)
-if os.name == 'nt': # working on windows
-    sys.path.append(r'E:/scripts/python/utils')
-    sys.path.append(r'E:/scripts/python/calc_lakeheat_isimip/2020_Vanderkelen_etal_GRL')
-    basepath = 'E:/'
-else:
-    basepath = '/home/inne/documents/phd/'
-    sys.path.append(r'/home/inne/documents/phd/scripts/python/calc_lakeheat_isimip/2020_Vanderkelen_etal_GRL')
+sys.path.append(os.getcwd())
 
-    from cdo import Cdo
-    cdo = Cdo()
+from cdo import Cdo
+cdo = Cdo()
 
 import xarray as xr
 import numpy as np
 import geopandas as gpd
-
-
-
 
 # -------------------------------------------------------------------------
 # CONFIGURATION
@@ -46,11 +34,11 @@ import geopandas as gpd
 # ------------------------------
 # turn on/off parts of script
 
-flag_preprocess = False
+flag_preprocess = False # this is done on the cluster, using the same scripts
 
 flag_interpolate_watertemp = False # make interpolation of CLM temperature fields. (takes time)
 
-flag_calcheat  = False # if false use saved lake heat (otherwise use saved lake heat)
+flag_calcheat  = False # if false use saved lake heat (otherwise use saved lake heat), for ALBM done on the cluster. 
 
 # whether or not to save calculated lake heat (can only be true if flag_calcheat is true)
 flag_savelakeheat = False
@@ -76,8 +64,9 @@ flag_scenario = 'climate'  # 'climate'    : only climate change (lake cover cons
                               # 'both'       : reservoir construction and climate
 
 # Reference to which period/year anomalies are calculated
-flag_ref = 'pre-industrial'  # 'pre-industrial': first 30 years (1900-1929 for start_year =1900)
-flag_ref =  1971  # 1971 or any integer: year as a reference 
+flag_ref = 'pre-industrial'  # 'pre-industrial': first 30 years (1900-1929 for start_year =1900) 
+
+#flag_ref =  1971  # 1971 or any integer: year as a reference 
 
 
 
@@ -85,13 +74,19 @@ flag_ref =  1971  # 1971 or any integer: year as a reference
 # -----------------------------------------------------------
 # PATHS
 
-project_name = 'isimip_lakeheat/'
+basepath = os.getcwd()
 
-indir  = basepath + 'data/ISIMIP/OutputData/lakes_global/'
-outdir = basepath + 'data/processed/'+ project_name
-plotdir= basepath + 'data/processed/'+ project_name+ '/plots/'
-indir_lakedata   = basepath + 'data/isimip_laketemp/' # directory where lake fraction and depth are located
+indir  = basepath + '/data/ISIMIP/OutputData/lakes_global/'
+outdir = basepath + '/data/processed/'
+plotdir= basepath + '/data/processed/plots/'
+indir_lakedata   = basepath + '/data/auxiliary_data/' # directory where lake fraction and depth are located
 
+# paths on hydra (where preprocessing is done)
+#project_name = 'isimip_lakeheat/'
+
+#indir  = '/gpfs/projects/climate/data/dataset/isimip/isimip2b/OutputData/lakes_global/'
+#outdir = '/scratch/brussel/100/vsc10055/'+ project_name
+#plotdir= '/scratch/brussel/100/vsc10055/'+ project_name + '/plots/'
 
 
 # -----------------------------------------------------------
@@ -132,8 +127,8 @@ resolution = 0.5 # degrees
 # constants values to check
 cp_liq = 4.188e3   # [J/kg K] heat capacity liquid water
 cp_ice = 2.11727e3 # [J/kg K] heat capacity ice
-cp_salt= 3.993e3   #[J/kg K] heat capacity salt ocean water (not used)
-l_fus = 3.337e5    #[J/kg]  latent heat of future
+cp_salt= 3.993e3   # [J/kg K] heat capacity salt ocean water (not used)
+l_fus = 3.337e5    # [J/kg]  latent heat of future
 
 
 rho_liq = 1000     # [kg/m2] density liquid water
@@ -149,8 +144,11 @@ rho_ice = 0.917e3  # [kg/m2] density ice
 if flag_preprocess: 
     from preprocess_isimip import *
     preprocess_isimip(models, forcings, variables, experiments, future_experiment, indir, outdir)
+    
+    
+    from preprocess_iceheat import *
+    preprocess_iceheat()
 
-# possible to add here preprocessing for ice
 
 
 #%%
@@ -227,11 +225,12 @@ if flag_plotting_paper:
     do_plotting(flag_save_plots, plotdir, models , forcings, lakeheat, flag_ref, years_analysis,outdir)
     plot_forcings_allmodels(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, years_analysis,outdir)
 
-    plot_casestudies()# add here plotting for plotting case studies
+    plot_casestudies(basepath,indir_lakedata,outdir,flag_ref,years_analysis)
 
 if flag_plotting_input_maps: # plotting of lake/reservoir area fraction and lake depth
     from plotting_globalmaps import *
     do_plotting_globalmaps(indir_lakedata, plotdir, years_grand,start_year,end_year)
+
 
 #%%
 # -------------------------------------------------------------------------
@@ -243,5 +242,5 @@ if flag_plotting_input_maps: # plotting of lake/reservoir area fraction and lake
 if flag_do_evaluation: 
     from preprocess_obs import * 
     from do_evaluation import *
-    preprocess_obs()
+    preprocess_obs(basepath)
     do_evaluation()
