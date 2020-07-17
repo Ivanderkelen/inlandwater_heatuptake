@@ -4,7 +4,9 @@ Data processing and analysis used in Vanderkelen et al., 2020.
 
 ## For users
 This repository includes the processing and plotting scripts used in Vanderkelen et al, 2020. 
+
 The HYDROLAKES and GRanD data is processed using the tool [polygon_to_cellareafraction](https://github.com/VUB-HYDR/polygon_to_cellareafraction). 
+
 The data analysis and plotting is done with python, checkout the [main](main_lakeheat.py) script for an overview. 
 
 ## Versions

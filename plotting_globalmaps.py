@@ -73,7 +73,7 @@ def map_lakepct(var,lon,lat,levels,title_str,clrmap,fig_name,alone=True,ax=False
     #cbar.ax.set_xticklabels(['Low', 'Medium', 'High'])  # horizontal colorbar
     # if so, save the figure
     if fig_name != 0 and alone:
-        plt.savefig(fig_name+'.png')
+        plt.savefig(fig_name+'.jpeg',dpi=1000, bbox_inches='tight')
 
 
 def map_respct(var,lon,lat,levels,title_str,clrmap,fig_name,alone=True,ax=False):
@@ -110,7 +110,7 @@ def map_respct(var,lon,lat,levels,title_str,clrmap,fig_name,alone=True,ax=False)
     cbar.set_ticks(np.arange(0,110,10))  # horizontal colorbar
     # if so, save the figure
     if fig_name != 0 and alone:
-        plt.savefig(fig_name+'.png')
+        plt.savefig(fig_name+'.jpeg',dpi=1000, bbox_inches='tight')
 
 # lakedepth
 def map_global_lakedepth(var,lon,lat,clr_map,clb_label,title_str,fig_name,alone=True,ax=False):
@@ -158,7 +158,7 @@ def map_global_lakedepth(var,lon,lat,clr_map,clb_label,title_str,fig_name,alone=
     
     # save the figure, adjusting the resolution 
     if fig_name != 0 and alone:
-        plt.savefig(fig_name+'.png')
+        plt.savefig(fig_name+'.jpeg',dpi=1000, bbox_inches='tight')
 
 
 #%% big function
@@ -180,7 +180,7 @@ def do_plotting_globalmaps(indir_lakedata, plotdir, years_grand,start_year,end_y
     lat = hydrolakes_lakepct.PCT_LAKE.lat
 
     lake_depth = lake_depth * landmask
-
+    end_year = 2017
     # take analysis years of lake_pct
     lake_pct  = lake_pct[years_grand.index(start_year):years_grand.index(end_year), :, :]
 
@@ -201,20 +201,20 @@ def do_plotting_globalmaps(indir_lakedata, plotdir, years_grand,start_year,end_y
 
 # %% Make one figure - not yet working. 
 
-fig, (ax1,ax2,ax3) = plt.subplots(3,1,subplot_kw={'projection': ccrs.PlateCarree()})
+# fig, (ax1,ax2,ax3) = plt.subplots(3,1,subplot_kw={'projection': ccrs.PlateCarree()})
 
-# map global lake depth
-map_global_lakedepth(lake_depth,lon,lat,'Blues','Lake depth [m]','Lake depth based on GLDB v3',plotdir+'map_lakedepth',  False,ax1)
-#ax1.text(0.03, 0.92, '(a)', transform=ax1.transAxes, fontsize=14)
+# # map global lake depth
+# map_global_lakedepth(lake_depth,lon,lat,'Blues','Lake depth [m]','Lake depth based on GLDB v3',plotdir+'map_lakedepth',  False,ax1)
+# #ax1.text(0.03, 0.92, '(a)', transform=ax1.transAxes, fontsize=14)
 
-# map lake pct
-map_lakepct(natlake_pct,lon,lat,np.arange(0,105,5),'Natural lake area fraction, based on HydroLAKES', 'Blues',plotdir+'map_lake_fraction', False, ax2)
+# # map lake pct
+# map_lakepct(natlake_pct,lon,lat,np.arange(0,105,5),'Natural lake area fraction, based on HydroLAKES', 'Blues',plotdir+'map_lake_fraction', False, ax2)
 
-# map reservoir pct 
-map_respct(res_pct,lon,lat,np.arange(0,110,10),'Reservoir area fraction in 2017, based on GRanD', 'Blues',plotdir+'map_res_fraction', False, ax3)
-plt.tight_layout()
+# # map reservoir pct 
+# map_respct(res_pct,lon,lat,np.arange(0,110,10),'Reservoir area fraction in 2017, based on GRanD', 'Blues',plotdir+'map_res_fraction', False, ax3)
+# plt.tight_layout()
 
-plt.savefig(plotdir+'maps_input'+'.png')
+# plt.savefig(plotdir+'maps_input'+'.png')
 
 
 

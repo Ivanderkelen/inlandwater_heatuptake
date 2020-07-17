@@ -17,7 +17,7 @@ from shapely import wkt
 import pandas as pd
 import os
 from osgeo import gdal
-
+from load_lakeheat_albm import  *
 
 # ------------------------------------------------------------------------
 # Data Agggregation functions
@@ -29,6 +29,7 @@ def timeseries(indict):
         tempdict = {}
         for f in indict[k]:
             tempdict[f] = np.nansum(indict[k][f],axis=(1,2))
+            tempdict[f][tempdict[f] == 0.0] = np.nan
         outdict[k] = tempdict
     return outdict
 
@@ -65,10 +66,11 @@ def ensmean_ts_per_model(indict):
 def ensmean_ts(indict):
     # ensemble mean timeseries
     ens_summed = {}
-    tempdict = {}
     for k in indict: 
+        tempdict = {}
         for f in indict[k]:
             tempdict[f] = np.nansum(indict[k][f],axis=(1,2))
+            tempdict = cor_for_albm(tempdict,k,f)
         stacked = np.stack(tempdict.values())
         ens_summed[k] = np.nanmean(stacked,axis=0)
 
@@ -78,11 +80,12 @@ def ensmean_ts(indict):
 
 def ens_std_ts(indict):
     # calculate standard deviation of timeseries
-    tempdict = {}
     concat_stacked = np.array([])
     for k in indict: 
+        tempdict = {}
         for f in indict[k]:
             tempdict[f] = np.nansum(indict[k][f],axis=(1,2))
+            tempdict = cor_for_albm(tempdict,k,f)
         stacked = np.stack(tempdict.values())
         # put all forcings of models together. 
         if concat_stacked.size == 0:
@@ -90,7 +93,7 @@ def ens_std_ts(indict):
         else:
             concat_stacked = np.concatenate((concat_stacked,stacked),axis=0)
     # calculate average over ensemble members
-    ens_std = np.std(concat_stacked,axis=0)
+    ens_std = np.nanstd(concat_stacked,axis=0)
 
     return ens_std
 
@@ -98,8 +101,8 @@ def ens_std_ts(indict):
 def ensmin_ts_per_model(indict):
     # ensemble minimum timeseries
     outdict = {}
-    tempdict = {}
     for k in indict: 
+        tempdict = {}
         for f in indict[k]:
             tempdict[f] = np.nansum(indict[k][f],axis=(1,2))
         stacked = np.stack(tempdict.values())
@@ -110,10 +113,11 @@ def ensmin_ts_per_model(indict):
 def ensmin_ts(indict):
     # ensemble minimum timeseries
     ens_summed = {}
-    tempdict = {}
     for k in indict: 
+        tempdict = {}
         for f in indict[k]:
             tempdict[f] = np.nansum(indict[k][f],axis=(1,2))
+            tempdict = cor_for_albm(tempdict,k,f)
         stacked = np.stack(tempdict.values())
         ens_summed[k] = np.nanmin(stacked,axis=0)
 
@@ -128,6 +132,7 @@ def ensmax_ts_per_model(indict):
         tempdict = {}
         for f in indict[k]:
             tempdict[f] = np.nansum(indict[k][f],axis=(1,2))
+            tempdict = cor_for_albm(tempdict,k,f)
         stacked = np.stack(tempdict.values())
         outdict[k] = np.nanmax(stacked,axis=0)
     return outdict
@@ -136,10 +141,12 @@ def ensmax_ts_per_model(indict):
 def ensmax_ts(indict):
     # ensemble minimum timeseries
     ens_summed = {}
-    tempdict = {}
     for k in indict: 
+        tempdict = {}
         for f in indict[k]:
             tempdict[f] = np.nansum(indict[k][f],axis=(1,2))
+            tempdict = cor_for_albm(tempdict,k,f)
+
         stacked = np.stack(tempdict.values())
         ens_summed[k] = np.nanmax(stacked,axis=0)
 
@@ -289,6 +296,7 @@ def get_lonlat(indir_lakedata):
 
 
     return lon,lat
+
 
 
 
@@ -491,12 +499,20 @@ def extract_region(indir_lakedata,indict,extent):
 
 def load_lakeheat(scenario,outdir,flag_ref, years_analysis):
     lakeheat= np.load(outdir+'lakeheat_'+scenario+'.npy',allow_pickle='TRUE').item()
-    lakeheat_anom = calc_anomalies(lakeheat, flag_ref,years_analysis)
+    
+    if not scenario =='onlyresclimate':
+        lakeheat_albm = load_lakeheat_albm(outdir,scenario,years_analysis)
+        lakeheat.update(lakeheat_albm)
+        del lakeheat_albm
+
+    lakeheat_anom = calc_anomalies(lakeheat, flag_ref, years_analysis)
+
     anom_ensmean = moving_average(ensmean_ts(lakeheat_anom))
     anom_ensmin  = moving_average(ensmin_ts(lakeheat_anom))
     anom_ensmax  = moving_average(ensmax_ts(lakeheat_anom))
     anom_std     = moving_average(ens_std_ts(lakeheat_anom))
     del lakeheat_anom, lakeheat
+
     return (anom_ensmean, anom_ensmin, anom_ensmax, anom_std)
 
 
@@ -510,6 +526,11 @@ def load_riverheat(outdir):
 
 def load_lakeheat_totalclimate(outdir,flag_ref, years_analysis):
     lakeheat_climate = np.load(outdir+'lakeheat_climate.npy',allow_pickle='TRUE').item()
+    scenario = 'climate'
+    lakeheat_albm = load_lakeheat_albm(outdir,scenario,years_analysis)
+    lakeheat_climate.update(lakeheat_albm)    
+    del lakeheat_albm
+    
     lakeheat_climate_anom = calc_anomalies(lakeheat_climate, flag_ref,years_analysis)
     climate_anom_ensmean = moving_average(ensmean_ts(lakeheat_climate_anom))
     climate_anom_std     = moving_average(ens_std_ts(lakeheat_climate_anom))
@@ -549,3 +570,65 @@ def calc_reservoir_warming(outdir):
 
     lakeheat_filename = 'lakeheat_onlyresclimate.npy'
     np.save(outdir+lakeheat_filename, lakeheat_onlyresclimate) 
+
+
+# create grid (1cel longitude, all latitudes)
+def make_grid(xmin,xmax,ymin,ymax,resolution):
+        """
+        Function to make a regular polygon grid
+        spanning over xmin, xmax, ymin, ymax 
+        and with a given resolution
+
+        output: geoDataFrame of grid
+        """
+
+        nx = np.arange(xmin, xmax,resolution)
+        ny = np.arange(ymin, ymax,resolution)
+
+        # create polygon grid
+        polygons = []
+        for x in nx:
+                for y in ny:
+                        poly  = Polygon([(x,y), (x+resolution, y), (x+resolution, y-resolution), (x, y-resolution)])
+                        # account for precision (necessary to create grid at exact location)
+                        poly = wkt.loads(wkt.dumps(poly, rounding_precision=2))
+                        polygons.append(poly)
+                
+        # store polygons in geodataframe
+        grid = gpd.GeoDataFrame({'geometry':polygons})
+        return grid
+
+
+def calc_grid_area(res): 
+
+    """
+    Function to calculate the area of each grid cell for a global grid
+    given the resolution
+    Returns a numpy array with the size of the grid containing areas for each grid cell
+    """
+    xmin=0
+    xmax=xmin+res
+    ymin= -90+res
+    ymax= 90+res
+
+    grid_1d = make_grid(xmin,xmax,ymin,ymax,res)
+    grid_1d.crs = {'init':'epsg:4326'}
+
+    # reproject grid to cilindrical equal-area projection
+    grid_1d = grid_1d.to_crs({'init':'epsg:6933'})
+
+    # calculate area per polygon of projected grid
+    grid_1d["area"]=grid_1d.area
+
+    # retrieve areas as a np array
+    areas_1d = grid_1d["area"].values
+
+    # concatenate areas to make global grid
+    areas_global = np.empty([int(180/res),int(360/res)])
+
+    ncol = int(360/res)
+
+    for i in range(ncol):
+        areas_global[:,i]=areas_1d
+
+    return areas_global

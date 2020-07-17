@@ -33,7 +33,7 @@ def calc_lakeheat(models,forcings,future_experiment, indir_lakedata, years_grand
         for forcing in forcings:
 
             # define directory and filename
-            variables = ['watertemp', 'lakeicefrac', 'icetemp']
+            variables = ['watertemp']#, 'lakeicefrac', 'icetemp']
             outdir_model = {}
             outfile_annual = {}
 
@@ -50,17 +50,17 @@ def calc_lakeheat(models,forcings,future_experiment, indir_lakedata, years_grand
                     outfile_annual.update({variable:model.lower()+'_'+forcing+'_'+experiment+'_'+variable_fn+'_1861_2099'+'_'+'annual'+'.nc4'})
 
             # if simulation is available
-            
+            print(outdir_model['watertemp']+outfile_annual['watertemp'])
             if os.path.isfile(outdir_model['watertemp']+outfile_annual['watertemp']): 
                 print('Calculating lake heat of '+ model + ' ' + forcing)
                 
                 # open lake heat variable 
                 ds_laketemp = xr.open_dataset(outdir_model['watertemp']+outfile_annual['watertemp'],decode_times=False)
                 laketemp = ds_laketemp.watertemp.values
-        
+                print('Lake temps opened')
                 # open ice fraction variable
-                ds_icefrac = xr.open_dataset(outdir_model['lakeicefrac']+outfile_annual['lakeicefrac'],decode_times=False)
-                icefrac = ds_icefrac.lakeicefrac.values
+               # ds_icefrac = xr.open_dataset(outdir_model['lakeicefrac']+outfile_annual['lakeicefrac'],decode_times=False)
+               # icefrac = ds_icefrac.lakeicefrac.values
 
                 # insert here icetemp with designated flag (or based on model)
 
@@ -68,15 +68,15 @@ def calc_lakeheat(models,forcings,future_experiment, indir_lakedata, years_grand
                     # use lake temperature from first year of analysis
                     laketemp = laketemp[years_isimip[model].index(start_year),:,:,:]
                    
-                    icefrac = icefrac[years_isimip[model].index(start_year),:,:,:]
+                   # icefrac = icefrac[years_isimip[model].index(start_year),:,:,:]
 
                 else: 
                     # extract years of analysis
                     laketemp = laketemp[years_isimip[model].index(start_year):years_isimip[model].index(end_year),:,:,:]
-                    icefrac = icefrac[years_isimip[model].index(start_year):years_isimip[model].index(end_year),:,:,:]
+                    #icefrac = icefrac[years_isimip[model].index(start_year):years_isimip[model].index(end_year),:,:,:]
 
                 #lakeheat_layered =  ((rho_liq * cp_liq * (1-icefrac)) + (rho_ice * cp_ice * icefrac) )* depth_per_layer* laketemp
-                lakeheat_layered =  rho_liq * cp_liq * depth_per_layer* laketemp
+                lakeheat_layered =  rho_liq * cp_liq * depth_per_layer * laketemp
 
                 # add manual time dimension for reservoir scenario. 
                 if flag_scenario == 'reservoirs': lakeheat_layered = np.expand_dims(lakeheat_layered,axis=0)
@@ -92,9 +92,10 @@ def calc_lakeheat(models,forcings,future_experiment, indir_lakedata, years_grand
                         else: 
                             lakeheat_perarea[:,i,j] = np.nan
 
-                np.save('lakeheat_perarea.npy', np.flip(lakeheat_perarea,axis=1))
+                #np.save('lakeheat_perarea.npy', np.flip(lakeheat_perarea,axis=1))
 
                 lakeheat_forcing = calc_lakeheat_area(resolution, indir_lakedata, flag_scenario,  np.flip(lakeheat_perarea,axis=1), years_grand,start_year,end_year)
+               
                 # clean up
                 del laketemp, ds_laketemp, lakeheat_layered, lakeheat_perarea, icefrac, ds_icefrac
 

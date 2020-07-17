@@ -41,7 +41,7 @@ def calc_depth_per_layer(flag_scenario, indir_lakedata, years_grand, start_year,
         layer_thickness_rel = np.expand_dims(layer_thickness_rel,axis=2)
 
     # add other models in here
-    elif model == 'SIMSTRAT-UoG':
+    elif model == 'SIMSTRAT-UoG' or model == 'ALBM':
         # load just one annual watertemp file with lake levels. 
         variable = 'watertemp'                        
         outdir_model = outdir+variable+'/'+model+'/'
@@ -109,6 +109,8 @@ def calc_lakeheat_area(resolution, indir_lakedata, flag_scenario, lakeheat_perar
     grid_area      = calc_grid_area(resolution)
     lake_area      = lake_pct * grid_area  
     np.save('lake_area.npy',lake_area)
+
+    # lake_area = np.load('lake_area.npy')
     # take lake area constant at 1900 level.
     if flag_scenario == 'climate': # in this scenario, volume per layer has only 3 dimensions
 

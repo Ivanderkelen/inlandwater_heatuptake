@@ -20,11 +20,11 @@ import sys
 # settings for windows or linux machine (for paths)
 if os.name == 'nt': # working on windows
     sys.path.append(r'E:/scripts/python/utils')
-    sys.path.append(r'E:/scripts/python/calc_lakeheat_isimip/lakeheat_isimip')
+    sys.path.append(r'E:/scripts/python/calc_lakeheat_isimip/2020_Vanderkelen_etal_GRL')
     basepath = 'E:/'
 else:
     basepath = '/home/inne/documents/phd/'
-    sys.path.append(r'/home/inne/documents/phd/scripts/python/calc_lakeheat_isimip/lakeheat_isimip')
+    sys.path.append(r'/home/inne/documents/phd/scripts/python/calc_lakeheat_isimip/2020_Vanderkelen_etal_GRL')
 
     from cdo import Cdo
     cdo = Cdo()
@@ -48,34 +48,36 @@ import geopandas as gpd
 
 flag_preprocess = False
 
-
 flag_interpolate_watertemp = False # make interpolation of CLM temperature fields. (takes time)
 
-flag_calcheat  = False # whether or not to calculate lake heat (otherwise use saved lake heat)
+flag_calcheat  = False # if false use saved lake heat (otherwise use saved lake heat)
 
 # whether or not to save calculated lake heat (can only be true if flag_calcheat is true)
 flag_savelakeheat = False
 
-flag_get_values = False
+flag_get_values = True
 
 flag_plotting_forcings = False
 
-flag_plotting_paper = False 
+flag_plotting_paper = True
 
-flag_plotting_input_maps = False
+flag_plotting_input_maps = True
 
 flag_save_plots = False
+
+flag_do_evaluation = False
+
 # -----------------------------
 # scenarios
 
 # flag to set which scenario is used for heat calculation
-flag_scenario = 'climate'        # 'climate'    : only climate change (lake cover constant at 2005 level)
+flag_scenario = 'climate'  # 'climate'    : only climate change (lake cover constant at 2005 level)
                               # 'reservoirs' : only reservoir construction (temperature constant at 1900 level)
                               # 'both'       : reservoir construction and climate
 
 # Reference to which period/year anomalies are calculated
 flag_ref = 'pre-industrial'  # 'pre-industrial': first 30 years (1900-1929 for start_year =1900)
-                             # 1971 or any integer: year as a reference 
+flag_ref =  1971  # 1971 or any integer: year as a reference 
 
 
 
@@ -95,7 +97,7 @@ indir_lakedata   = basepath + 'data/isimip_laketemp/' # directory where lake fra
 # -----------------------------------------------------------
 # MODELS & FORCINGS
 
-models      = ['CLM45']#,'SIMSTRAT-UoG']#,'VIC-LAKE','LAKE']
+models      = [ 'CLM45','SIMSTRAT-UoG', 'ALBM']#,'VIC-LAKE','LAKE']
 forcings    = ['gfdl-esm2m','hadgem2-es','ipsl-cm5a-lr','miroc5']
 experiments = ['historical','future']
 
@@ -118,6 +120,8 @@ years_pi               = range(1861,1891,1)
 years_isimip = {}
 years_isimip['CLM45'] = range(1891,2030,1)
 years_isimip['SIMSTRAT-UoG'] = range(1891,2030,1)
+years_isimip['ALBM'] = range(1891,2030,1)
+
 
 
 # -----------------------------------------------------------
@@ -129,6 +133,8 @@ resolution = 0.5 # degrees
 cp_liq = 4.188e3   # [J/kg K] heat capacity liquid water
 cp_ice = 2.11727e3 # [J/kg K] heat capacity ice
 cp_salt= 3.993e3   #[J/kg K] heat capacity salt ocean water (not used)
+l_fus = 3.337e5    #[J/kg]  latent heat of future
+
 
 rho_liq = 1000     # [kg/m2] density liquid water
 rho_ice = 0.917e3  # [kg/m2] density ice
@@ -173,13 +179,26 @@ if flag_calcheat:
     lakeheat = calc_lakeheat(models,forcings,future_experiment, indir_lakedata, years_grand, resolution,outdir, years_isimip,start_year, end_year, flag_scenario, flag_savelakeheat, rho_liq, cp_liq, rho_ice, cp_ice)
 
 else: 
-    # load from file based on scenario: 
+
+    from load_lakeheat_albm import *
+
+    # load from file based on scenario: (ALBM separate as these are calculated on HPC)
     if flag_scenario == 'climate':
         lakeheat = np.load(outdir+'lakeheat_climate.npy',allow_pickle='TRUE').item()
+        lakeheat_albm = load_lakeheat_albm(outdir,flag_scenario,years_analysis)
+       
+    #    lakeheat_albm = load_lakeheat_albm(outdir,flag_scenario,years_analysis,forcings)
     elif flag_scenario == 'reservoirs':
         lakeheat = np.load(outdir+'lakeheat_reservoirs.npy',allow_pickle='TRUE').item()
+        lakeheat_albm = load_lakeheat_albm(outdir,flag_scenario,years_analysis)
+        
     elif flag_scenario == 'both':
         lakeheat = np.load(outdir+'lakeheat_both.npy',allow_pickle='TRUE').item()
+        lakeheat_albm = load_lakeheat_albm(outdir,flag_scenario,years_analysis)
+
+    # add ALBM dictionary to lakeheat dict. 
+    lakeheat.update(lakeheat_albm)
+
 
 #%%
 # -------------------------------------------------------------------------
@@ -188,7 +207,7 @@ else:
 
 if flag_get_values: 
     from get_values_lakeheat import * 
-    get_values(outdir,flag_ref, years_analysis)
+    get_values(outdir,flag_ref, years_analysis, indir_lakedata, resolution)
 
 #%%
 # -------------------------------------------------------------------------
@@ -203,14 +222,26 @@ if flag_plotting_forcings:
 
 if flag_plotting_paper: 
     from plotting_lakeheat import * 
+    from plotting_casestudies import *
+    
     do_plotting(flag_save_plots, plotdir, models , forcings, lakeheat, flag_ref, years_analysis,outdir)
     plot_forcings_allmodels(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, years_analysis,outdir)
 
-    # add here plotting for plotting case studies
+    plot_casestudies()# add here plotting for plotting case studies
 
 if flag_plotting_input_maps: # plotting of lake/reservoir area fraction and lake depth
     from plotting_globalmaps import *
     do_plotting_globalmaps(indir_lakedata, plotdir, years_grand,start_year,end_year)
 
-    
+#%%
+# -------------------------------------------------------------------------
+# EVALUATION
+# 
+# Do spot evaluations 
+# -------------------------------------------------------------------------
 
+if flag_do_evaluation: 
+    from preprocess_obs import * 
+    from do_evaluation import *
+    preprocess_obs()
+    do_evaluation()

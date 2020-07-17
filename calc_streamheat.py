@@ -23,7 +23,7 @@ else:
     cdo = Cdo()
 
 from calc_grid_area   import calc_grid_area
-from dict_functions import *
+from functions import *
 
 
 # %%
