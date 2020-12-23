@@ -18,4 +18,4 @@ This project is licensed under the MIT License. See also the
 file.
 
 ## References
-Vanderkelen, I., van Lipzig, N. P. M., Lawrence, D. M., Droppers, B., Golub, M., Gosling, S. N., Janssen, A. B., G., Marcé R., Müller Schmied, H., Perroud, M., Pierson, D., Pokhrel, Y., Satoh, Y., Schewe, J., Seneviratne, S. I., Stepanenko, V. M., Woolway, R. I. and Thiery, W. Global heat uptake by inland waters, Geophysical Research Letters, 47, e2020GL087867. https://doi.org/10.1029/2020GL087867
+Vanderkelen, I., van Lipzig, N. P. M., Lawrence, D. M., Droppers, B., Golub, M., Gosling, S. N., Janssen, A. B., G., Marcé R., Müller Schmied, H., Perroud, M., Pierson, D., Pokhrel, Y., Satoh, Y., Schewe, J., Seneviratne, S. I., Stepanenko, V. M., Woolway, R. I. and Thiery, W., Global heat uptake by inland waters, Geophysical Research Letters, 47, e2020GL087867, 2020. https://doi.org/10.1029/2020GL087867
