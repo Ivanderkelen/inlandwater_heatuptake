@@ -9,15 +9,14 @@ Scripts for calculating river heat content based on river temperatures and river
 # %%
 import os 
 import sys
-
+import xarray as xr
 # settings for windows or linux machine (for paths)
 if os.name == 'nt': # working on windows
     sys.path.append(r'E:/scripts/python/utils')
     sys.path.append(r'E:/scripts/python/calc_lakeheat_isimip/lakeheat_isimip')
     basepath = 'E:/'
 else:
-    basepath = '/home/inne/documents/phd/'
-    sys.path.append(r'/home/inne/documents/phd/scripts/python/calc_lakeheat_isimip/lakeheat_isimip')
+    sys.path.append(r'/home/inne/documents/phd/scripts/python/calc_lakeheat_isimip/2020_Vanderkelen_etal_GRL/')
 
     from cdo import Cdo
     cdo = Cdo()
@@ -40,10 +39,11 @@ flag_ref = 'pre-industrial' # 'pre-industrial': first 30 years (1900-1929 for st
 # -----------------------------------------------------------
 # initialise
 
+basepath = '/home/inne/documents/phd/scripts/python/calc_lakeheat_isimip/2020_Vanderkelen_etal_GRL'
 
-indir  =  basepath + 'data/ISIMIP/OutputData/water_global'
-outdir =  basepath + 'data/processed/isimip_lakeheat/riverheat/'
-plotdir=  basepath + '/data/processed/isimip_lakeheat/plots/'
+indir  =  basepath + '/data/ISIMIP/OutputData/water_global'
+outdir =  basepath + '/data/processed/riverheat'
+plotdir=  basepath + '/data/processed/plots/'
 
 
 
@@ -165,7 +165,7 @@ for model in models:
 
         # define directory and filename
         variable = 'riverstor'                        
-        outdir_model = outdir+variable+'/'+model+'/'
+        outdir_model = outdir+'/'+variable+'/'+model+'/'
         outfile_annual = model.lower()+'_'+forcing+'_'+experiment+'_'+variable+'_'+'1861_2099'+'_'+'annual'+'.nc4'
 
         outfile_streamtemp =  var_streamtemp+'_'+forcings_streamtemp[ind_forcing]+'_1861_2099_annual.nc4'

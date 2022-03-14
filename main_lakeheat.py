@@ -87,10 +87,10 @@ flag_ref =  1971  # 1971 or any integer: year as a reference
 
 project_name = 'isimip_lakeheat/'
 
-indir  = basepath + 'data/ISIMIP/OutputData/lakes_global/'
-outdir = basepath + 'data/processed/'+ project_name
-plotdir= basepath + 'data/processed/'+ project_name+ '/plots/'
-indir_lakedata   = basepath + 'data/isimip_laketemp/' # directory where lake fraction and depth are located
+indir  = './data/ISIMIP/OutputData/lakes_global/'
+outdir = './data/processed/'
+plotdir= './data/processed/plots/'
+indir_lakedata   = './data/isimip_laketemp/' # directory where lake fraction and depth are located
 
 
 

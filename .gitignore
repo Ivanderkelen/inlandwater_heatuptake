@@ -3,4 +3,5 @@ __pychache__/
 ignore/
 .directory
 extract_from_hydrolakes.py
+data/
 
