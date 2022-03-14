@@ -1,5 +1,5 @@
 # 2019_Vanderkelen_et_al_GRL
-Data processing and analysis used in Vanderkelen et al., 2020. 
+Data processing and analysis used in Vanderkelen et al., 2020.
 
 
 ## For users
@@ -18,5 +18,4 @@ This project is licensed under the MIT License. See also the
 file.
 
 ## References
-Vanderkelen, I., van Lipzig, N. P. M., Lawrence, D. M., Droppers, B., Golub, M., Gosling, S. N., Janssen, A. B., G., Marcé R., Müller Schmied, H., Perroud, M., Pierson, D., Pokhrel, Y., Satoh, Y., Schewe, J., Seneviratne, S. I., Stepanenko, V. M., Woolway, R. I. and Thiery, W. Global heat uptake by inland waters, submitted to Geographical Research Letters.     
-
+Vanderkelen, I., van Lipzig, N. P. M., Lawrence, D. M., Droppers, B., Golub, M., Gosling, S. N., Janssen, A. B., G., Marcé R., Müller Schmied, H., Perroud, M., Pierson, D., Pokhrel, Y., Satoh, Y., Schewe, J., Seneviratne, S. I., Stepanenko, V. M., Woolway, R. I. and Thiery, W., Global heat uptake by inland waters, Geophysical Research Letters, 47, e2020GL087867, 2020. https://doi.org/10.1029/2020GL087867

@@ -9,9 +9,9 @@ import matplotlib.pyplot as plt
 import os 
 
 
-def preprocess_obs():
+def preprocess_obs(basepath):
     # define idrectory where data is located
-    evaldir = '/home/inne/documents/phd/data/isimip_laketemp/evaluation' 
+    evaldir = basepath+ '/evaluation' 
     datadir = '/LakeData/'
 
     # read lakenames and metadata

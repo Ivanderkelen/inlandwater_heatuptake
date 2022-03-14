@@ -3,7 +3,7 @@ Author      : Inne Vanderkelen (inne.vanderkelen@vub.be)
 Institution : Vrije Universiteit Brussel (VUB)
 Date        : November 2019
 
-Scripts for calculating river heat content based on river temperatures and river storage 
+Script for calculating river heat content based on river temperatures and river storage 
 
 """
 # %%
@@ -21,14 +21,20 @@ else:
     from cdo import Cdo
     cdo = Cdo()
 
+
+from cdo import Cdo
+cdo = Cdo()
+>>>>>>> refs/remotes/origin/master:main_streamheat.py
 from calc_grid_area   import calc_grid_area
-from functions import *
+from dict_functions import *
+
+sys.path.append(os.getcwd())
 
 
 # %%
 # load river storages
 
-flag_preprocess = False 
+flag_preprocess = True 
 
 flag_saveriverheat = True
 flag_saveriverheat_forAmazon = False
@@ -44,6 +50,7 @@ basepath = '/home/inne/documents/phd/scripts/python/calc_lakeheat_isimip/2020_Va
 indir  =  basepath + '/data/ISIMIP/OutputData/water_global'
 outdir =  basepath + '/data/processed/riverheat'
 plotdir=  basepath + '/data/processed/plots/'
+
 
 
 
@@ -81,58 +88,7 @@ rho_ice = 0.917e3  #[kg/m³] density ice
 # see also preprocess_rivertemp.py file. 
 
 if flag_preprocess: 
-    for model in models:
-        for forcing in forcings:
-
-            for variable in variables:
-
-                for experiment in experiments:
-                # differentiate for future experiments filenames
-                    if experiment == 'future': 
-                        experiment_fn = future_experiment 
-                        period = '2006_2099'
-                    elif experiment == 'historical': 
-                        experiment_fn = experiment
-                        period = '1861_2005'  
-
-                    for scenario in scenarios:
-                        path = indir+'/'+model+'/'+forcing+'/'+experiment+'/'
-                        infile = model.lower()+'_'+forcing+'_'+'ewembi'+'_'+experiment_fn+'_'+scenario+'_'+variable+'_'+'global'+'_'+'monthly'+'_'+period+'.nc4'
-                        outfile_assembled = model.lower()+'_'+forcing+'_historical_'+future_experiment+'_'+variable+'_'+'1861_2099'+'_'+'annual'+'.nc4'
-
-                        # if simulation is available 
-                        if os.path.isfile(path+infile): 
-
-                            # make output directory per model if not done yet
-                            outdir_model = outdir+'/'+variable+'/'+model+'/'
-                            if not os.path.isdir(outdir_model):
-                                os.system('mkdir '+outdir_model)
-                        
-                            # calculate annual means per model for each forcing (if not done so)
-                            outfile_annual = model.lower()+'_'+forcing+'_'+experiment_fn+'_'+variable+'_'+'1861_2005'+'_'+'annual'+'.nc4'
-                            if (not os.path.isfile(outdir_model+outfile_assembled)):
-                                print('calculating annual means of '+infile)
-                                cdo.yearmean(input=path+infile,output=outdir_model+outfile_annual)
-
-
-                # assemble historical and future simulation
-                infile_hist = model.lower() +'_'+forcing+'_historical_'           +variable+'_'+'1861_2005'+'_'+'annual'+'.nc4'
-                infile_fut  = model.lower()+'_'+forcing+'_'+future_experiment+'_'+variable+'_'+'1861_2005'+'_'+'annual'+'.nc4'
-                
-                if (not os.path.isfile(outdir_model+outfile_assembled)):
-                    print('concatenating historical and '+future_experiment+' simulations of '+model+' '+forcing)
-                    cdo.mergetime(input=outdir_model+infile_hist+' '+outdir_model+infile_fut,output=outdir_model+outfile_assembled )
-                    # clean up 
-                    os.system('rm '+outdir_model+infile_hist +' '+outdir_model+infile_fut)
-
-                # calculate ensemble mean forcing for each model (if not done so)
-                outfile_ensmean = model.lower()+'_historical_'+future_experiment+'_'+variable+'_'+'1861_2005'+'_'+'annual'+'_'+'ensmean'+'.nc4'
-                if (not os.path.isfile(outdir_model+outfile_ensmean)):
-                    print('calculating ensemble means of '+model)
-                    cdo.ensmean(input=outdir_model+outfile_assembled,output=outdir_model+outfile_ensmean)
-                else:
-                    print(model+' '+forcing+' is already preprocessed.')
-
+    print('Run calc_rivertemperatures.py manually (done on cluster)')
 
 #%%
 # Calculate river heat content
