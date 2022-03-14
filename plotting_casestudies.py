@@ -24,26 +24,10 @@ from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 import shapely.geometry as sgeom
 from shapely.geometry import box
 import sys
-sys.path.append(r'/home/inne/documents/phd/scripts/python/calc_lakeheat_isimip/lakeheat_isimip')
 from dict_functions import *
 
-def plot_casestudies():
 
-
-    # outdir, flag_ref, years_analysis
-
-    
-    # paths from main
-    basepath = '/home/inne/documents/phd/'
-    project_name = 'isimip_lakeheat/'
-    indir_lakedata   = basepath + 'data/isimip_laketemp/' # directory where lake fraction and depth are located
-
-    outdir = basepath + 'data/processed/'+ project_name
-    flag_ref = 'pre-industrial'
-
-    start_year = 1896
-    end_year = 2025
-    years_analysis         = range(start_year,end_year,1)
+def plot_casestudies(basepath,indir_lakedata,outdir,flag_ref,years_analysis):
 
 
     mpl.rc('axes',edgecolor='grey')
@@ -80,9 +64,7 @@ def plot_casestudies():
 
 
 
-
     #%% Plotting function
-
 
     def plot_region_hc_map(var, region_props, lakes_path, indir_lakedata):
 
@@ -595,68 +577,67 @@ def plot_casestudies():
     riverheat_region_anom = np.load(outdir+'riverheat/riverheat_amazon_anom.npy').item() 
     getvalues_region_hc_ts(region_AM,riverheat_region_anom)
 
+    #%%
+    # plot Africa with separate forcings. 
 
-#%%
-# plot Africa with separate forcings. 
-
-# read heat content data
-# load lake heat (to be removed)
-lakeheat = np.load(outdir+'lakeheat_climate.npy',allow_pickle='TRUE').item()
-lakeheat_albm = load_lakeheat_albm(outdir,'climate',years_analysis)
-lakeheat.update(lakeheat_albm)
-del lakeheat_albm
-
-
-lakeheat_wgt_anom = calc_region_hc_ts(lakeheat, lakes_path, region_AGL, indir_lakedata, flag_ref,years_analysis)
-label = '(d)'
-colors = ('coral','sandybrown')
-
-region_props = region_AGL
-
-f,ax1 = plt.subplots(figsize=(6,4))
+    # read heat content data
+    # load lake heat (to be removed)
+    lakeheat = np.load(outdir+'lakeheat_climate.npy',allow_pickle='TRUE').item()
+    lakeheat_albm = load_lakeheat_albm(outdir,'climate',years_analysis)
+    lakeheat.update(lakeheat_albm)
+    del lakeheat_albm
 
 
-# get region specific properties from dictionary
-name_str          = region_props['name_str']
+    lakeheat_wgt_anom = calc_region_hc_ts(lakeheat, lakes_path, region_AGL, indir_lakedata, flag_ref,years_analysis)
+    label = '(d)'
+    colors = ('coral','sandybrown')
+
+    region_props = region_AGL
+
+    f,ax1 = plt.subplots(figsize=(6,4))
 
 
-# ensemble mean timeseries (mean from all forcings, per model)
-outdict = {}
-for k in lakeheat_wgt_anom: 
-    tempdict = {}
-    for f in lakeheat_wgt_anom[k]:
-        tempdict[f] = np.nansum(lakeheat_wgt_anom[k][f],axis=(1,2))
-        tempdict = cor_for_albm(tempdict,k,f)
-    outdict[k] = tempdict
+    # get region specific properties from dictionary
+    name_str          = region_props['name_str']
 
 
-lakeheat_wgt_region_ts  = moving_average(outdict)
-x_values = moving_average(np.asarray(years_analysis))
+    # ensemble mean timeseries (mean from all forcings, per model)
+    outdict = {}
+    for k in lakeheat_wgt_anom: 
+        tempdict = {}
+        for f in lakeheat_wgt_anom[k]:
+            tempdict[f] = np.nansum(lakeheat_wgt_anom[k][f],axis=(1,2))
+            tempdict = cor_for_albm(tempdict,k,f)
+        outdict[k] = tempdict
 
-colors = matplotlib.cm.get_cmap('tab20')
-i=0
-# subplot 1: natural lakes heat uptake
-legend_text = []
-for model in models:
-    for forcing in forcings:
-        ax1.plot(x_values,lakeheat_wgt_region_ts[model][forcing],color=colors(i))
-        text = model +' ' +forcing
-        legend_text.append(text)
-        i = i+1
 
-box = ax1.get_position()
-ax1.set_position([box.x0,box.y0,box.width * 0.8, box.height])
-ax1.legend(legend_text,loc='center left', bbox_to_anchor=(1.05,0.5), fontsize=11)
+    lakeheat_wgt_region_ts  = moving_average(outdict)
+    x_values = moving_average(np.asarray(years_analysis))
 
-ax1.set_xlim(x_values[0],x_values[-1])
-ax1.set_xticks(ticks= np.array([1902,1920,1940,1960,1980,2000,2020]))
-ax1.set_xticklabels([1900,1920,1940,1960,1980,2000,2020] )
-#ax1.set_ylim(-0.4e20,1e20)
-ax1.set_ylabel('Energy [J]')
-ax1.set_title(name_str, loc='right')
-ax1.text(0.03, 0.92, label, transform=ax1.transAxes, fontsize=12)
+    colors = matplotlib.cm.get_cmap('tab20')
+    i=0
+    # subplot 1: natural lakes heat uptake
+    legend_text = []
+    for model in models:
+        for forcing in forcings:
+            ax1.plot(x_values,lakeheat_wgt_region_ts[model][forcing],color=colors(i))
+            text = model +' ' +forcing
+            legend_text.append(text)
+            i = i+1
 
-plt.savefig(plotdir+'AGL_perforcing.png',dpi=500, bbox_inches='tight')
+    box = ax1.get_position()
+    ax1.set_position([box.x0,box.y0,box.width * 0.8, box.height])
+    ax1.legend(legend_text,loc='center left', bbox_to_anchor=(1.05,0.5), fontsize=11)
+
+    ax1.set_xlim(x_values[0],x_values[-1])
+    ax1.set_xticks(ticks= np.array([1902,1920,1940,1960,1980,2000,2020]))
+    ax1.set_xticklabels([1900,1920,1940,1960,1980,2000,2020] )
+    #ax1.set_ylim(-0.4e20,1e20)
+    ax1.set_ylabel('Energy [J]')
+    ax1.set_title(name_str, loc='right')
+    ax1.text(0.03, 0.92, label, transform=ax1.transAxes, fontsize=12)
+
+    plt.savefig(plotdir+'AGL_perforcing.png',dpi=500, bbox_inches='tight')
 
 
 
