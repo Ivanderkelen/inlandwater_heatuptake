@@ -38,7 +38,11 @@ def calc_lakeheat(models,forcings,future_experiment, indir_lakedata, years_grand
             outfile_annual = {}
 
             for variable in variables:
-                variable_fn = variable+'_interp' if variable == 'watertemp' else variable   
+                if model == 'GOTM':
+                    variable_fn = variable if variable == 'watertemp' else variable   
+                else: 
+                    variable_fn = variable+'_interp' if variable == 'watertemp' else variable   
+                    
                 if not outdir_model: 
                     outdir_model = {variable:outdir+variable+'/'+model+'/'}
                 else:
@@ -97,7 +101,7 @@ def calc_lakeheat(models,forcings,future_experiment, indir_lakedata, years_grand
                 lakeheat_forcing = calc_lakeheat_area(resolution, indir_lakedata, flag_scenario,  np.flip(lakeheat_perarea,axis=1), years_grand,start_year,end_year)
                
                 # clean up
-                del laketemp, ds_laketemp, lakeheat_layered, lakeheat_perarea, icefrac, ds_icefrac
+                del laketemp, ds_laketemp, lakeheat_layered, lakeheat_perarea, 
 
                 # save lakeheat in directory structure per forcing
             if not lakeheat_model:

@@ -1,9 +1,10 @@
 """
 Author      : Inne Vanderkelen (inne.vanderkelen@vub.be)
 Institution : Vrije Universiteit Brussel (VUB)
-Date        : November 2019
+Date        : March 2022
 
 Main script for heat calculation and plotting
+Update for land heat inventory analysis. 
 
 """
 
@@ -17,8 +18,8 @@ import sys
 
 sys.path.append(os.getcwd())
 
-from cdo import Cdo
-cdo = Cdo()
+#from cdo import Cdo
+#cdo = Cdo()
 
 import xarray as xr
 import numpy as np
@@ -38,18 +39,18 @@ flag_preprocess = False # this is done on the cluster, using the same scripts
 
 flag_interpolate_watertemp = False # make interpolation of CLM temperature fields. (takes time)
 
-flag_calcheat  = False # if false use saved lake heat (otherwise use saved lake heat), for ALBM done on the cluster. 
+flag_calcheat  = True # if false use saved lake heat (otherwise use saved lake heat), for ALBM done on the cluster. 
 
 # whether or not to save calculated lake heat (can only be true if flag_calcheat is true)
 flag_savelakeheat = False
 
 flag_get_values = True
 
-flag_plotting_forcings = False
+flag_plotting_forcings = True
 
-flag_plotting_paper = True
+flag_plotting_paper = False
 
-flag_plotting_input_maps = True
+flag_plotting_input_maps = False
 
 flag_save_plots = False
 
@@ -92,8 +93,8 @@ indir_lakedata   = basepath + '/data/auxiliary_data/' # directory where lake fra
 # -----------------------------------------------------------
 # MODELS & FORCINGS
 
-models      = [ 'CLM45','SIMSTRAT-UoG', 'ALBM']#,'VIC-LAKE','LAKE']
-forcings    = ['gfdl-esm2m','hadgem2-es','ipsl-cm5a-lr','miroc5']
+models      = ['GOTM'] #[ 'CLM45','SIMSTRAT-UoG', 'ALBM', 'GOTM']#,'VIC-LAKE','LAKE']
+forcings    = ['gfdl-esm2m','ipsl-cm5a-lr','hadgem2-es','miroc5'] #,'miroc5']
 experiments = ['historical','future']
 
 # experiment used for future simulations (needed to differentiate between filenames)
@@ -105,7 +106,7 @@ variables   = ['watertemp']
 # -----------------------------------------------------------
 # PERIODS
 start_year = 1896
-end_year = 2025
+end_year = 2025 #2026
 
 years_grand            = range(1850,2018,1)
 years_analysis         = range(start_year,end_year,1)
@@ -116,6 +117,8 @@ years_isimip = {}
 years_isimip['CLM45'] = range(1891,2030,1)
 years_isimip['SIMSTRAT-UoG'] = range(1891,2030,1)
 years_isimip['ALBM'] = range(1891,2030,1)
+years_isimip['GOTM'] = range(1891,2030,1)
+
 
 
 
@@ -220,12 +223,12 @@ if flag_plotting_forcings:
 
 if flag_plotting_paper: 
     from plotting_lakeheat import * 
-    from plotting_casestudies import *
+    #from plotting_casestudies import *
     
     do_plotting(flag_save_plots, plotdir, models , forcings, lakeheat, flag_ref, years_analysis,outdir)
     plot_forcings_allmodels(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, years_analysis,outdir)
 
-    plot_casestudies(basepath,indir_lakedata,outdir,flag_ref,years_analysis)
+    #plot_casestudies(basepath,indir_lakedata,outdir,flag_ref,years_analysis)
 
 if flag_plotting_input_maps: # plotting of lake/reservoir area fraction and lake depth
     from plotting_globalmaps import *
@@ -244,3 +247,5 @@ if flag_do_evaluation:
     from do_evaluation import *
     preprocess_obs(basepath)
     do_evaluation()
+
+# %%

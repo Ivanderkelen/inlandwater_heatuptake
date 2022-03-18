@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import cartopy.crs as ccrs
 import cartopy as ctp
-import mplotutils as mpu 
+#import mplotutils as mpu 
 from dict_functions import *
 
 # do settings
@@ -55,7 +55,7 @@ def plot_forcings(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref,
 
             line_zero = ax[nplot].plot(x_values, np.zeros(np.shape(x_values)), linewidth=0.5,color='darkgray')
             line1 = ax[nplot].plot(x_values,lakeheat_anom_ts[model][forcing], color='coral')
-            ax[nplot].set_xlim(1900,2020)
+            ax[nplot].set_xlim(1900,2021)
             ax[nplot].set_xticks(ticks=xticks)
             ax[nplot].set_ylim(-0.5e20,1.5e20)
             ax[nplot].set_ylabel('Energy [J]')
