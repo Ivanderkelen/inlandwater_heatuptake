@@ -206,7 +206,7 @@ def ensmean_spcumsum(indict):
         outdict[k] = np.cumsum(ensemblemean,axis=0)
     return outdict
 
-def moving_average(indict, n=10):
+def moving_average(indict, n=6):
     # calculate 5-day moving average of dictionary of nps or dictorionary in dictionary of nps 
 
     # movign average op np array

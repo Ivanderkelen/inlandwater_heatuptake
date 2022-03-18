@@ -39,16 +39,16 @@ flag_preprocess = False # this is done on the cluster, using the same scripts
 
 flag_interpolate_watertemp = False # make interpolation of CLM temperature fields. (takes time)
 
-flag_calcheat  = True # if false use saved lake heat (otherwise use saved lake heat), for ALBM done on the cluster. 
+flag_calcheat  = False # if false use saved lake heat (otherwise use saved lake heat), for ALBM done on the cluster. 
 
 # whether or not to save calculated lake heat (can only be true if flag_calcheat is true)
 flag_savelakeheat = False
 
 flag_get_values = True
 
-flag_plotting_forcings = True
+flag_plotting_forcings = False
 
-flag_plotting_paper = False
+flag_plotting_paper = True
 
 flag_plotting_input_maps = False
 
@@ -93,7 +93,7 @@ indir_lakedata   = basepath + '/data/auxiliary_data/' # directory where lake fra
 # -----------------------------------------------------------
 # MODELS & FORCINGS
 
-models      = ['GOTM'] #[ 'CLM45','SIMSTRAT-UoG', 'ALBM', 'GOTM']#,'VIC-LAKE','LAKE']
+models      = ['CLM45','SIMSTRAT-UoG', 'ALBM']#,'GOTM']#,'VIC-LAKE','LAKE']
 forcings    = ['gfdl-esm2m','ipsl-cm5a-lr','hadgem2-es','miroc5'] #,'miroc5']
 experiments = ['historical','future']
 
@@ -247,5 +247,7 @@ if flag_do_evaluation:
     from do_evaluation import *
     preprocess_obs(basepath)
     do_evaluation()
+
+# %%
 
 # %%
