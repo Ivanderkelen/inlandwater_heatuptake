@@ -41,11 +41,16 @@ def calc_depth_per_layer(flag_scenario, indir_lakedata, years_grand, start_year,
         layer_thickness_rel = np.expand_dims(layer_thickness_rel,axis=2)
 
     # add other models in here
-    elif model == 'SIMSTRAT-UoG' or model == 'ALBM':
+    else:
         # load just one annual watertemp file with lake levels. 
         variable = 'watertemp'                        
         outdir_model = outdir+variable+'/'+model+'/'
-        outfile_annual = model.lower()+'_hadgem2-es_historical_rcp60_'+variable+'_1861_2099_annual.nc4'
+        if model == 'GOTM': 
+            outfile_annual = model.lower()+'_gfdl-esm2m_historical_rcp60_'+variable+'_1861_2099_annual.nc4'
+
+        else: 
+            outfile_annual = model.lower()+'_hadgem2-es_historical_rcp60_'+variable+'_1861_2099_annual.nc4'
+
         ds_lakelev = xr.open_dataset(outdir_model+outfile_annual,decode_times=False)
         lakelevdepth = ds_lakelev.depth.values
         # not necessary to flip here. 
@@ -56,7 +61,7 @@ def calc_depth_per_layer(flag_scenario, indir_lakedata, years_grand, start_year,
         layer_thickness = np.empty((np.size(lakelevdepth,0),np.size(lake_depth,0),np.size(lake_depth,1)))
         for lev in range(1,np.size(lakelevdepth,0)):
             if lev == 0: 
-                layer_thickness[lev,:,:] = lakelevdepth[lev,:,:]*2
+                layer_thickness[lev,:,:] = lakelevdepth[lev,:,:]*2 # why is this multiplied by 2????
             else: 
                 layer_thickness[lev,:,:] = (lakelevdepth[lev,:,:]-lakelevdepth[lev-1,:,:])*2
 
@@ -67,6 +72,7 @@ def calc_depth_per_layer(flag_scenario, indir_lakedata, years_grand, start_year,
     depth_per_layer     = layer_thickness_rel * lake_depth
     
     return depth_per_layer
+
 
 
     
@@ -108,7 +114,13 @@ def calc_lakeheat_area(resolution, indir_lakedata, flag_scenario, lakeheat_perar
     # calculate lake area per grid cell (m²)
     grid_area      = calc_grid_area(resolution)
     lake_area      = lake_pct * grid_area  
-    np.save('lake_area.npy',lake_area)
+    # np.save('lake_area.npy',lake_area)
+    
+
+    # improved volume estimate comes here
+    # assumption of lake volume as reversed wedding pie
+    # area_per_layer =  calc_area_per_layer(layer_thickness_rel,lake_area,volume_development)
+
 
     # lake_area = np.load('lake_area.npy')
     # take lake area constant at 1900 level.
@@ -124,5 +136,18 @@ def calc_lakeheat_area(resolution, indir_lakedata, flag_scenario, lakeheat_perar
     return lakeheat_total
 
 
+# calculate area per layer (corresponding to depth)
+# see paper of Johannson et al., 2007 
+def calc_area_per_layer(depth_per_layer, layer_thickness_rel,lake_area,volume_development):
+
+    Vd = volume_development
+    f_Vd = 1.7*Vd**(-1)+2.5-2.4*Vd+0.23*Vd**3
+
+    area_per_layer = lake_area * ((1-layer_thickness_rel)*(1+layer_thickness_rel*np.sin(np.sqrt(layer_thickness_rel)))**(f_Vd))
+
+    volume_per_layer = depth_per_layer * area_per_layer
 
 
+
+
+    return area_per_layer, volume_per_layer 
