@@ -71,14 +71,16 @@ def calc_depth_per_layer(flag_scenario, indir_lakedata, years_grand, start_year,
     # expand lake depth dataset to also account for lake layers
     depth_per_layer     = layer_thickness_rel * lake_depth
     
-    return depth_per_layer
+    return depth_per_layer, layer_thickness_rel
 
 
 
-    
+## OLD function
 def calc_lakeheat_area(resolution, indir_lakedata, flag_scenario, lakeheat_perarea,years_grand, start_year,end_year):   
     
     # see script test_resarea_sensitivity for sensitivity tests on different input datasets. 
+    # old file
+
 
     # lakepct_path          = indir_lakedata + 'mksurf_lake_0.5x0.5_hist_clm5_hydrolakes_1900-2000_c20190826.nc'
     lakepct_path       = indir_lakedata + 'mksurf_lake_0.5x0.5_hist_clm5_hydrolakes_1850-2017_c20191220.nc'
@@ -91,21 +93,7 @@ def calc_lakeheat_area(resolution, indir_lakedata, flag_scenario, lakeheat_perar
     # take analysis years of lake_pct
     lake_pct  = lake_pct[years_grand.index(start_year):years_grand.index(end_year_res), :, :]
 
-    # extend grand database for years before 1900
 
-    
-    # # this should be removed when updating new reservoir file
-    # # extend lake_pct data set with values further than 2000: 
-    # lake_1900 = lake_pct[0,:,:]
-    # lake_1900 = lake_1900[np.newaxis,:,:]
-    # lake_start_1900 = lake_1900
-    # for ind,year in enumerate(np.arange(start_year+1,years_grand[0])):
-    #     lake_start_1900 = np.append(lake_start_1900,lake_1900,axis=0)
-    # lake_pct= np.append(lake_start_1900,lake_pct,axis=0)
-
-
-    # # this should be removed when updating new reservoir file
-    # # extend lake_pct data set with values further than 2000: 
     lake_const=lake_pct[-1,:,:]
     lake_const = lake_const[np.newaxis,:,:]
     for ind,year in enumerate(np.arange(end_year_res,end_year)):
@@ -138,16 +126,80 @@ def calc_lakeheat_area(resolution, indir_lakedata, flag_scenario, lakeheat_perar
 
 # calculate area per layer (corresponding to depth)
 # see paper of Johannson et al., 2007 
-def calc_area_per_layer(depth_per_layer, layer_thickness_rel,lake_area,volume_development):
+def calc_area_per_layer(layer_thickness_rel,lake_area,flag_volume):
 
-    Vd = volume_development
-    f_Vd = 1.7*Vd**(-1)+2.5-2.4*Vd+0.23*Vd**3
+    # extend lake area to also include depth dimension. 
+    if np.ndim(lake_area) == 3: # with time dimension
+        lake_area_3d = np.repeat(lake_area[:,:, :, np.newaxis], len(layer_thickness_rel), axis=3)
+        lake_area_3d = np.moveaxis(lake_area_3d,3,1)
 
-    area_per_layer = lake_area * ((1-layer_thickness_rel)*(1+layer_thickness_rel*np.sin(np.sqrt(layer_thickness_rel)))**(f_Vd))
+    else: #without time dimension
+        lake_area_3d = np.repeat(lake_area[:, :, np.newaxis], len(layer_thickness_rel), axis=2)
+        lake_area_3d = np.moveaxis(lake_area_3d,2,0)
 
-    volume_per_layer = depth_per_layer * area_per_layer
+    area_per_layer = np.empty_like(lake_area_3d)
+    if flag_volume == 'cylindrical': # this means, the area is the same for every layer
+        area_per_layer = lake_area_3d
+
+    # here the other options with truncated cone can be inserted, as well as calculations on Vd values. 
+    elif not isinstance(flag_volume,str): # flag_volume == Vd 
+        Vd = flag_volume
+        f_Vd = 1.7*Vd**(-1)+2.5-2.4*Vd+0.23*Vd**3
+
+        for i,single_thickness in enumerate(layer_thickness_rel):
+            print(i)
+            if np.ndim(lake_area) == 3:
+                area_per_layer[:,i,:,:] = lake_area* ((1-single_thickness)*(1+single_thickness*np.sin(np.sqrt(single_thickness))))**(f_Vd)
+            else: 
+                area_per_layer[i,:,:] = lake_area* ((1-single_thickness)*(1+single_thickness*np.sin(np.sqrt(single_thickness))))**(f_Vd)
+
+    return area_per_layer
 
 
+def load_lakearea(resolution, indir_lakedata, years_grand, start_year,end_year,flag_scenario): 
+    
+    # load the lake area from hydrolakes
+
+    # lakepct_path          = indir_lakedata + 'mksurf_lake_0.5x0.5_hist_clm5_hydrolakes_1900-2000_c20190826.nc'
+    lakepct_path       = indir_lakedata + 'mksurf_lake_0.5x0.5_hist_clm5_hydrolakes_1850-2017_c20191220.nc'
+    hydrolakes_lakepct = xr.open_dataset(lakepct_path)
+    lake_pct           = hydrolakes_lakepct.PCT_LAKE.values/100 # to have then in fraction
+
+    # Extract period of lake pct file 
+    end_year_res = 2017
+
+    # take analysis years of lake_pct
+    lake_pct  = lake_pct[years_grand.index(start_year):years_grand.index(end_year_res), :, :]
 
 
-    return area_per_layer, volume_per_layer 
+    lake_const=lake_pct[-1,:,:]
+    lake_const = lake_const[np.newaxis,:,:]
+    for ind,year in enumerate(np.arange(end_year_res,end_year)):
+        lake_pct= np.append(lake_pct,lake_const,axis=0)
+
+    # calculate lake area per grid cell (m²)
+    grid_area      = calc_grid_area(resolution)
+    lake_area      = lake_pct * grid_area 
+
+    if flag_scenario == 'climate': # in this scenario, lake area has no time dimension
+
+        lake_area = lake_area[0,:,:] # lake area in end year
+
+
+    return lake_area
+
+def calc_volume_per_layer(flag_scenario, resolution, indir_lakedata, years_grand, start_year,end_year, model,outdir, flag_volume): 
+
+    # load depth per layer and relative depth per layer
+    depth_per_layer, layer_thickness_rel = calc_depth_per_layer(flag_scenario, indir_lakedata, years_grand, start_year,end_year, resolution, model,outdir)
+
+    # load lake area 
+    lake_area = load_lakearea(resolution, indir_lakedata, years_grand, start_year,end_year,flag_scenario)
+
+    area_per_layer = calc_area_per_layer(layer_thickness_rel, lake_area, flag_volume)
+
+
+    # for now, assume cylindrical volume per layer. 
+    volume_per_layer = area_per_layer * depth_per_layer 
+
+    return volume_per_layer

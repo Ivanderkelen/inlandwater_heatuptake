@@ -24,6 +24,7 @@ sys.path.append(os.getcwd())
 import xarray as xr
 import numpy as np
 import geopandas as gpd
+
 import warnings
 warnings.filterwarnings("ignore")
 # -------------------------------------------------------------------------
@@ -40,7 +41,7 @@ flag_preprocess = False # this is done on the cluster, using the same scripts
 
 flag_interpolate_watertemp = False # make interpolation of CLM temperature fields. (takes time)
 
-flag_calcheat  = False # if false use saved lake heat (otherwise use saved lake heat), for ALBM done on the cluster. 
+flag_calcheat  = True # if false use saved lake heat (otherwise use saved lake heat), for ALBM done on the cluster. 
 
 # whether or not to save calculated lake heat (can only be true if flag_calcheat is true)
 flag_savelakeheat = False
@@ -57,11 +58,16 @@ flag_save_plots = False
 
 flag_do_evaluation = False
 
+
+# flag to set volume calculation
+flag_volume = 'cylindrical' # truncated_cone_cst
+                            # if to use constant Vd, give number of Vd. e.g. 0.8
+
 # -----------------------------
 # scenarios
 
 # flag to set which scenario is used for heat calculation
-flag_scenario = 'climate'  # 'climate'    : only climate change (lake cover constant at 2005 level)
+flag_scenario = 'both'  # 'climate'    : only climate change (lake cover constant at 2005 level)
                               # 'reservoirs' : only reservoir construction (temperature constant at 1900 level)
                               # 'both'       : reservoir construction and climate
 
@@ -94,9 +100,14 @@ indir_lakedata   = basepath + '/data/auxiliary_data/' # directory where lake fra
 # -----------------------------------------------------------
 # MODELS & FORCINGS
 
-models      = ['CLM45','SIMSTRAT-UoG', 'ALBM']#,'GOTM']#,'VIC-LAKE','LAKE']
-forcings    = ['gfdl-esm2m','ipsl-cm5a-lr','hadgem2-es','miroc5'] #,'miroc5']
+models      = ['SIMSTRAT-UoG']#'CLM45','SIMSTRAT-UoG', 'ALBM']#,'GOTM']#,'VIC-LAKE','LAKE']
+forcings    = ['gfdl-esm2m']#,'ipsl-cm5a-lr','hadgem2-es','miroc5'] #,'miroc5']
 experiments = ['historical','future']
+
+# remove after development
+model = models[0]
+forcing = forcings[0]
+
 
 # experiment used for future simulations (needed to differentiate between filenames)
 future_experiment = 'rcp60' 
@@ -150,8 +161,8 @@ if flag_preprocess:
     preprocess_isimip(models, forcings, variables, experiments, future_experiment, indir, outdir)
     
     
-    from preprocess_iceheat import *
-    preprocess_iceheat()
+    #from preprocess_iceheat import *
+    #preprocess_iceheat()
 
 
 
@@ -179,7 +190,7 @@ if flag_calcheat:
 
     #volume_per_layer = calc_volume_per_layer(flag_scenario, indir_lakedata, years_grand, start_year,end_year, resolution, models,outdir)
     lakeheat = calc_lakeheat(models,forcings,future_experiment, indir_lakedata, years_grand, resolution,outdir, years_isimip,start_year, end_year, flag_scenario, flag_savelakeheat, rho_liq, cp_liq, rho_ice, cp_ice)
-
+    lakeheat2 = calc_lakeheat_with_volume(models,forcings,future_experiment, indir_lakedata, years_grand, resolution,outdir, years_isimip,start_year, end_year, flag_scenario, flag_savelakeheat, flag_volume, rho_liq, cp_liq, rho_ice, cp_ice)
 else: 
 
     from load_lakeheat_albm import *
