@@ -34,7 +34,7 @@ mpl.rc('text',color='dimgrey')
 def plot_forcings(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, years_analysis,outdir):
     
     
-    xticks = np.array([1900,1920,1940,1960,1980,2000,2020])
+    xticks = np.array([1900,1920,1940,1960,1980,2000,2021])
 
     #%% Plot raw heat uptake per model forcing 
     # calculate anomalies
@@ -70,7 +70,8 @@ def plot_forcings(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref,
 
 def plot_forcings_allmodels(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, years_analysis,outdir):
 
-    xticks = np.array([1900,1940,1980,2020])
+    xticks = np.array([1900,1940,1980,2021])
+    xlims=(1900,2021)
 
 
         #%% Plot raw heat uptake per model forcing 
@@ -95,7 +96,7 @@ def plot_forcings_allmodels(flag_save_plots, plotdir, models,forcings, lakeheat,
 
             line_zero = ax[nplot].plot(x_values, np.zeros(np.shape(x_values)), linewidth=0.5,color='darkgray')
             line1 = ax[nplot].plot(x_values,lakeheat_anom_ts[model][forcing], color='coral')
-            ax[nplot].set_xlim(1900,2020)
+            ax[nplot].set_xlim(xlims)
             #ax[nplot].set_ylim(-0.22e19,0.82e19)
             ax[nplot].set_xticks(ticks=xticks)
             if model == 'CLM45': ax[nplot].set_ylim(-7e20,10e20)
@@ -160,8 +161,8 @@ def do_plotting(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, y
     # load river heat variables
 
     # general plotting settings: 
-    xticks = np.array([1900,1920,1940,1960,1980,2000,2020])
-
+    xticks = np.array([1900,1920,1940,1960,1980,2000,2021])
+    xlims=(1900,2021)
 
     # %% Figure 1
     # ------------------------------------------------
@@ -188,7 +189,7 @@ def do_plotting(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, y
         upper_2std = lakeheat_climate_anom_ensmean_ts + lakeheat_climate_anom_std_ts
         area2 = ax1.fill_between(x_values,under_2std,upper_2std, color='sandybrown',alpha=0.5)
 
-    ax1.set_xlim(x_values[0],x_values[-1])
+    ax1.set_xlim(xlims)
     ax1.set_xticks(ticks= xticks)
     #ax1.set_ylim(-0.4e20,1e20)
     ax1.set_ylabel('Energy [J]')
@@ -212,7 +213,7 @@ def do_plotting(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, y
         upper_2std = lakeheat_onlyresclimate_anom_ensmean_ts + lakeheat_onlyresclimate_anom_std_ts
         area2 = ax2.fill_between(x_values,under_2std,upper_2std, color='plum',alpha=0.5)
 
-    ax2.set_xlim(x_values[0],x_values[-1])
+    ax2.set_xlim(xlims)
     ax2.set_xticks(ticks= xticks)
     #ax1.set_ylim(-0.4e20,1e20)
     ax2.set_ylabel('Energy [J]')
@@ -235,7 +236,7 @@ def do_plotting(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, y
         upper_2std = riverheat_anom_ensmean_ts + 2*riverheat_anom_std_ts
         area3 = ax3.fill_between(x_values,under_2std,upper_2std, color='lightsteelblue')
 
-    ax3.set_xlim(x_values[0],x_values[-1])
+    ax3.set_xlim(xlims)
     ax3.set_xticks(ticks=xticks)
     #ax1.set_ylim(-0.4e20,1e20)
     ax3.set_ylabel('Energy [J]')
@@ -346,7 +347,7 @@ def do_plotting(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, y
         #upper_2std = lakeheat_climate_anom_ensmean_ts + 2*lakeheat_climate_anom_std_ts
         #area2 = ax1.fill_between(x_values,under_2std,upper_2std, color='sandybrown',alpha=0.5)
 
-    ax1.set_xlim(x_values[0],x_values[-1])
+    ax1.set_xlim(xlims)
     ax1.set_xticks(xticks)
     #ax1.set_ylim(-0.4e20,1e20)
     ax1.set_ylabel('Energy [J]')
@@ -412,7 +413,7 @@ def do_plotting(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, y
         #upper_2std = lakeheat_onlyresclimate_anom_ensmean_ts + 2*lakeheat_onlyresclimate_anom_std_ts
         #area2 = ax2.fill_between(x_values,under_2std,upper_2std, color='plum',alpha=0.5)
 
-    ax2.set_xlim(x_values[0],x_values[-1])
+    ax2.set_xlim(xlims)
     ax2.set_xticks(ticks= xticks)
     #ax1.set_ylim(-0.4e20,1e20)
     ax2.set_ylabel('Energy [J]')

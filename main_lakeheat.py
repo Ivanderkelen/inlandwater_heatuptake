@@ -24,7 +24,8 @@ sys.path.append(os.getcwd())
 import xarray as xr
 import numpy as np
 import geopandas as gpd
-
+import warnings
+warnings.filterwarnings("ignore")
 # -------------------------------------------------------------------------
 # CONFIGURATION
 # -------------------------------------------------------------------------
