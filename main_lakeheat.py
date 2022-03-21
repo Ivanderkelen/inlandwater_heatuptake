@@ -46,11 +46,11 @@ flag_calcheat  = True # if false use saved lake heat (otherwise use saved lake h
 # whether or not to save calculated lake heat (can only be true if flag_calcheat is true)
 flag_savelakeheat = False
 
-flag_get_values = True
+flag_get_values = False
 
-flag_plotting_forcings = False
+flag_plotting_forcings = True
 
-flag_plotting_paper = True
+flag_plotting_paper = False
 
 flag_plotting_input_maps = False
 
@@ -60,14 +60,14 @@ flag_do_evaluation = False
 
 
 # flag to set volume calculation
-flag_volume = 'cylindrical' # truncated_cone_cst
+flag_volume = 0.8 # truncated_cone_cst
                             # if to use constant Vd, give number of Vd. e.g. 0.8
 
 # -----------------------------
 # scenarios
 
 # flag to set which scenario is used for heat calculation
-flag_scenario = 'both'  # 'climate'    : only climate change (lake cover constant at 2005 level)
+flag_scenario = 'climate'  # 'climate'    : only climate change (lake cover constant at 2005 level)
                               # 'reservoirs' : only reservoir construction (temperature constant at 1900 level)
                               # 'both'       : reservoir construction and climate
 
@@ -100,13 +100,10 @@ indir_lakedata   = basepath + '/data/auxiliary_data/' # directory where lake fra
 # -----------------------------------------------------------
 # MODELS & FORCINGS
 
-models      = ['SIMSTRAT-UoG']#'CLM45','SIMSTRAT-UoG', 'ALBM']#,'GOTM']#,'VIC-LAKE','LAKE']
-forcings    = ['gfdl-esm2m']#,'ipsl-cm5a-lr','hadgem2-es','miroc5'] #,'miroc5']
+models      = ['CLM45','SIMSTRAT-UoG'] #, 'ALBM']#,'GOTM']#,'VIC-LAKE','LAKE']
+forcings    = ['gfdl-esm2m','ipsl-cm5a-lr','hadgem2-es','miroc5'] #,'miroc5']
 experiments = ['historical','future']
 
-# remove after development
-model = models[0]
-forcing = forcings[0]
 
 
 # experiment used for future simulations (needed to differentiate between filenames)
@@ -189,8 +186,8 @@ if flag_calcheat:
     from calc_lakeheat import *
 
     #volume_per_layer = calc_volume_per_layer(flag_scenario, indir_lakedata, years_grand, start_year,end_year, resolution, models,outdir)
-    lakeheat = calc_lakeheat(models,forcings,future_experiment, indir_lakedata, years_grand, resolution,outdir, years_isimip,start_year, end_year, flag_scenario, flag_savelakeheat, rho_liq, cp_liq, rho_ice, cp_ice)
-    lakeheat2 = calc_lakeheat_with_volume(models,forcings,future_experiment, indir_lakedata, years_grand, resolution,outdir, years_isimip,start_year, end_year, flag_scenario, flag_savelakeheat, flag_volume, rho_liq, cp_liq, rho_ice, cp_ice)
+    #lakeheat = calc_lakeheat(models,forcings,future_experiment, indir_lakedata, years_grand, resolution,outdir, years_isimip,start_year, end_year, flag_scenario, flag_savelakeheat, rho_liq, cp_liq, rho_ice, cp_ice)
+    lakeheat = calc_lakeheat_with_volume(models,forcings,future_experiment, indir_lakedata, years_grand, resolution,outdir, years_isimip,start_year, end_year, flag_scenario, flag_savelakeheat, flag_volume, rho_liq, cp_liq, rho_ice, cp_ice)
 else: 
 
     from load_lakeheat_albm import *

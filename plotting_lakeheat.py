@@ -57,7 +57,7 @@ def plot_forcings(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref,
             line1 = ax[nplot].plot(x_values,lakeheat_anom_ts[model][forcing], color='coral')
             ax[nplot].set_xlim(1900,2021)
             ax[nplot].set_xticks(ticks=xticks)
-            ax[nplot].set_ylim(-0.5e20,1.5e20)
+            #ax[nplot].set_ylim(-0.5e20,1.5e20)
             ax[nplot].set_ylabel('Energy [J]')
             ax[nplot].set_title(forcing, pad=15)
 
