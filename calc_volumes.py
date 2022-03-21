@@ -143,6 +143,7 @@ def calc_area_per_layer(layer_thickness_rel,lake_area,flag_volume):
 
     # here the other options with truncated cone can be inserted, as well as calculations on Vd values. 
     elif not isinstance(flag_volume,str): # flag_volume == Vd 
+        print('calculate volume with Vd='+str(flag_volume))
         Vd = flag_volume
         f_Vd = 1.7*Vd**(-1)+2.5-2.4*Vd+0.23*Vd**3
 
@@ -193,13 +194,16 @@ def calc_volume_per_layer(flag_scenario, resolution, indir_lakedata, years_grand
     # load depth per layer and relative depth per layer
     depth_per_layer, layer_thickness_rel = calc_depth_per_layer(flag_scenario, indir_lakedata, years_grand, start_year,end_year, resolution, model,outdir)
 
+    # flip because they are read in upside down. 
+    depth_per_layer = np.flip(depth_per_layer,axis=1)
+    layer_thickness_rel = np.flip(layer_thickness_rel,axis=1)
     # load lake area 
     lake_area = load_lakearea(resolution, indir_lakedata, years_grand, start_year,end_year,flag_scenario)
 
     area_per_layer = calc_area_per_layer(layer_thickness_rel, lake_area, flag_volume)
 
 
-    # for now, assume cylindrical volume per layer. 
+    # assume cylindrical volume per layer. 
     volume_per_layer = area_per_layer * depth_per_layer 
 
     return volume_per_layer

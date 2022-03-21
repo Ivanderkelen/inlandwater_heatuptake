@@ -54,7 +54,7 @@ def calc_lakeheat(models,forcings,future_experiment, indir_lakedata, years_grand
                     outfile_annual.update({variable:model.lower()+'_'+forcing+'_'+experiment+'_'+variable_fn+'_1861_2099'+'_'+'annual'+'.nc4'})
 
             # if simulation is available
-            print(outdir_model['watertemp']+outfile_annual['watertemp'])
+            #print(outdir_model['watertemp']+outfile_annual['watertemp'])
             if os.path.isfile(outdir_model['watertemp']+outfile_annual['watertemp']): 
                 print('Calculating lake heat of '+ model + ' ' + forcing)
                 
@@ -168,14 +168,14 @@ def calc_lakeheat_with_volume(models,forcings,future_experiment, indir_lakedata,
                     outfile_annual.update({variable:model.lower()+'_'+forcing+'_'+experiment+'_'+variable_fn+'_1861_2099'+'_'+'annual'+'.nc4'})
 
             # if simulation is available
-            print(outdir_model['watertemp']+outfile_annual['watertemp'])
+            #print(outdir_model['watertemp']+outfile_annual['watertemp'])
             if os.path.isfile(outdir_model['watertemp']+outfile_annual['watertemp']): 
                 print('Calculating lake heat of '+ model + ' ' + forcing)
                 
                 # open lake heat variable 
                 ds_laketemp = xr.open_dataset(outdir_model['watertemp']+outfile_annual['watertemp'],decode_times=False)
                 laketemp = np.flip(ds_laketemp.watertemp.values,axis=2)
-                print('Lake temps opened')
+
                 # open ice fraction variable
                # ds_icefrac = xr.open_dataset(outdir_model['lakeicefrac']+outfile_annual['lakeicefrac'],decode_times=False)
                # icefrac = ds_icefrac.lakeicefrac.values
