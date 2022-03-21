@@ -148,7 +148,6 @@ def calc_area_per_layer(layer_thickness_rel,lake_area,flag_volume):
         f_Vd = 1.7*Vd**(-1)+2.5-2.4*Vd+0.23*Vd**3
 
         for i,single_thickness in enumerate(layer_thickness_rel):
-            print(i)
             if np.ndim(lake_area) == 3:
                 area_per_layer[:,i,:,:] = lake_area* ((1-single_thickness)*(1+single_thickness*np.sin(np.sqrt(single_thickness))))**(f_Vd)
             else: 

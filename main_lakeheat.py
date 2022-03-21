@@ -61,6 +61,7 @@ flag_do_evaluation = False
 
 # flag to set volume calculation
 flag_volume = 0.8 # truncated_cone_cst
+                  # "cylindrical"
                             # if to use constant Vd, give number of Vd. e.g. 0.8
 
 # -----------------------------
@@ -100,8 +101,8 @@ indir_lakedata   = basepath + '/data/auxiliary_data/' # directory where lake fra
 # -----------------------------------------------------------
 # MODELS & FORCINGS
 
-models      = ['CLM45','SIMSTRAT-UoG'] #, 'ALBM']#,'GOTM']#,'VIC-LAKE','LAKE']
-forcings    = ['gfdl-esm2m','ipsl-cm5a-lr','hadgem2-es','miroc5'] #,'miroc5']
+models      = ['CLM45']#,'SIMSTRAT-UoG'] #, 'ALBM']#,'GOTM']#,'VIC-LAKE','LAKE']
+forcings    = ['gfdl-esm2m']#,'ipsl-cm5a-lr','hadgem2-es','miroc5'] #,'miroc5']
 experiments = ['historical','future']
 
 
@@ -149,30 +150,65 @@ rho_ice = 0.917e3  # [kg/m2] density ice
 
 #%%
 # -------------------------------------------------------------------------
-# PREPROCESS raw ISIMIP variables
-# Save them into annual timeseries for wanted period and store in correct folder
+# SENSITIVITY STUDY ON LAKE HEAT
 # -------------------------------------------------------------------------
+from calc_lakeheat import *
 
-if flag_preprocess: 
-    from preprocess_isimip import *
-    preprocess_isimip(models, forcings, variables, experiments, future_experiment, indir, outdir)
-    
-    
-    #from preprocess_iceheat import *
-    #preprocess_iceheat()
-
+# flag to set volume calculation
+vol_develoment_params = np.arange(0.3,1.35,0.05) # truncated_cone_cst
+                  # "cylindrical"
+                            # if to use constant Vd, give number of Vd. e.g. 0.8
+lakeheat_sensitivity = {}
+for n,vd in enumerate(vol_develoment_params):
+    print('calculating '+str(n+1)+ ' from '+str(len(vol_develoment_params))+' parameters')
+    flag_volume = vd
+    lakeheat_sensitivity[vd] = calc_lakeheat_with_volume(models,forcings,future_experiment, indir_lakedata, years_grand, resolution,outdir, years_isimip,start_year, end_year, flag_scenario, flag_savelakeheat, flag_volume, rho_liq, cp_liq, rho_ice, cp_ice)
 
 
 #%%
 # -------------------------------------------------------------------------
-# INTERPOLATE lake temperatures of CLM45 
-# based on lakepct mask and saves interpolated watertemps into netcdf 
+# PLOT SENSITIVITY STUDY ON LAKE HEAT
 # -------------------------------------------------------------------------
+from plotting_lakeheat import * 
 
-if flag_interpolate_watertemp:
-    from interp_watertemp import *
-    for model in models:
-        interp_watertemp(indir_lakedata,outdir,forcings,future_experiment,model)  
+
+xticks = np.array([1900,1920,1940,1960,1980,2000,2021])
+
+# calculate anomalies
+lakeheat_anom = {}
+lakeheat_anom_ts = {}
+
+
+for vd in vol_develoment_params: 
+    lakeheat_anom[vd] = calc_anomalies(lakeheat_sensitivity[vd], flag_ref,years_analysis)
+    # Calculate timeseries of lake heat anomaly
+    lakeheat_anom_ts[vd] = timeseries(lakeheat_anom[vd])
+
+# 4x4 individual forcing plot per model plot 
+for model in models:
+        
+    f,ax = plt.subplots(2,2, figsize=(8,7))
+    x_values = np.asarray(years_analysis)
+
+    ax = ax.ravel()
+
+    for nplot,forcing in enumerate(forcings):
+
+        line_zero = ax[nplot].plot(x_values, np.zeros(np.shape(x_values)), linewidth=0.5,color='darkgray')
+        for vd in vol_develoment_params:
+            line1 = ax[nplot].plot(x_values,lakeheat_anom_ts[vd][model][forcing])
+        ax[nplot].legend(vol_develoment_params)
+        ax[nplot].set_xlim(1900,2021)
+        ax[nplot].set_xticks(ticks=xticks)
+        #ax[nplot].set_ylim(-0.5e20,1.5e20)
+        ax[nplot].set_ylabel('Energy [J]')
+        ax[nplot].set_title(forcing, pad=15)
+
+    f.suptitle(model+' sensitivities for Vd parameter', fontsize=16)
+    f.tight_layout(rect=[0, 0.03, 1, 0.95])
+
+    if flag_save_plots:
+        plt.savefig(plotdir+model+'heat_acc_per_forcing'+'.png',dpi=300)
 
 
 #%%
