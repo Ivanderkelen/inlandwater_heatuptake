@@ -143,12 +143,10 @@ def calc_area_per_layer(layer_thickness_rel,lake_area,flag_volume):
 
     # here the other options with truncated cone can be inserted, as well as calculations on Vd values. 
     elif not isinstance(flag_volume,str): # flag_volume == Vd 
-        print('calculate volume with Vd='+str(flag_volume))
         Vd = flag_volume
         f_Vd = 1.7*Vd**(-1)+2.5-2.4*Vd+0.23*Vd**3
 
         for i,single_thickness in enumerate(layer_thickness_rel):
-            print(i)
             if np.ndim(lake_area) == 3:
                 area_per_layer[:,i,:,:] = lake_area* ((1-single_thickness)*(1+single_thickness*np.sin(np.sqrt(single_thickness))))**(f_Vd)
             else: 
@@ -207,3 +205,18 @@ def calc_volume_per_layer(flag_scenario, resolution, indir_lakedata, years_grand
     volume_per_layer = area_per_layer * depth_per_layer 
 
     return volume_per_layer
+
+
+def calc_median_Vd(indir_lakedata):
+    
+    # extract mean and maximum depths from GLOBAthy lakes to calculate the volume development parameter
+    # GLOBathy includes 1427688 lakes corresponding to HydroLAKES. 
+    
+    ds_hAV = xr.open_dataset(indir_lakedata+'GLOBathy_hAV_relationships.nc')
+    Dmax = ds_hAV.lake_attributes[:,0].values
+    Dmean = ds_hAV.lake_attributes[:,1].values
+    
+    Vd_median = np.median(3*(Dmean/Dmax)) # Ref: Johansson, H., Brolin, A. A., & Håkanson, L. (2007). New approaches to the modelling of lake basin morphometry. Environmental Modeling and Assessment, 12(3), 213–228. https://doi.org/10.1007/s10666-006-9069-z
+    
+    
+    return Vd_median
