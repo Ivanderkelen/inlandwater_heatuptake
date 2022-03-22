@@ -165,7 +165,10 @@ def calc_lakeheat_with_volume(models,forcings,future_experiment, indir_lakedata,
                 if not outfile_annual:
                     outfile_annual = {variable:model.lower()+'_'+forcing+'_'+experiment+'_'+variable_fn+'_1861_2099'+'_'+'annual'+'.nc4'} 
                 else: 
-                    outfile_annual.update({variable:model.lower()+'_'+forcing+'_'+experiment+'_'+variable_fn+'_1861_2099'+'_'+'annual'+'.nc4'})
+                    if model == 'GOTM' and forcing == 'ipsl-cm5a-lr':
+                        outfile_annual.update({variable:model.lower()+'_'+forcing+'_'+experiment+'_'+variable_fn+'_1891_2090'+'_'+'annual'+'.nc4'})
+                    else:
+                        outfile_annual.update({variable:model.lower()+'_'+forcing+'_'+experiment+'_'+variable_fn+'_1861_2099'+'_'+'annual'+'.nc4'})
 
             # if simulation is available
             #print(outdir_model['watertemp']+outfile_annual['watertemp'])
