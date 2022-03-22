@@ -101,8 +101,8 @@ indir_lakedata   = basepath + '/data/auxiliary_data/' # directory where lake fra
 # -----------------------------------------------------------
 # MODELS & FORCINGS
 
-models      = ['CLM45']#,'SIMSTRAT-UoG'] #, 'ALBM']#,'GOTM']#,'VIC-LAKE','LAKE']
-forcings    = ['gfdl-esm2m']#,'ipsl-cm5a-lr','hadgem2-es','miroc5'] #,'miroc5']
+models      = ['CLM45', 'SIMSTRAT-UoG'] #, 'ALBM']#,'GOTM']#,'VIC-LAKE','LAKE']
+forcings    = ['gfdl-esm2m','ipsl-cm5a-lr','hadgem2-es','miroc5'] #,'miroc5']
 experiments = ['historical','future']
 
 
@@ -170,7 +170,7 @@ for n,vd in enumerate(vol_develoment_params):
 # PLOT SENSITIVITY STUDY ON LAKE HEAT
 # -------------------------------------------------------------------------
 from plotting_lakeheat import * 
-
+import matplotlib as mpl
 
 xticks = np.array([1900,1920,1940,1960,1980,2000,2021])
 
@@ -178,6 +178,10 @@ xticks = np.array([1900,1920,1940,1960,1980,2000,2021])
 lakeheat_anom = {}
 lakeheat_anom_ts = {}
 
+# colors
+cmap = mpl.cm.get_cmap('YlGnBu')
+# extract all colors from the .jet map
+cmaplist = [cmap(i) for i in range(cmap.N)]
 
 for vd in vol_develoment_params: 
     lakeheat_anom[vd] = calc_anomalies(lakeheat_sensitivity[vd], flag_ref,years_analysis)

@@ -170,7 +170,7 @@ def calc_lakeheat_with_volume(models,forcings,future_experiment, indir_lakedata,
             # if simulation is available
             #print(outdir_model['watertemp']+outfile_annual['watertemp'])
             if os.path.isfile(outdir_model['watertemp']+outfile_annual['watertemp']): 
-                print('Calculating lake heat of '+ model + ' ' + forcing)
+                #print('Calculating lake heat of '+ model + ' ' + forcing)
                 
                 # open lake heat variable 
                 ds_laketemp = xr.open_dataset(outdir_model['watertemp']+outfile_annual['watertemp'],decode_times=False)
