@@ -59,14 +59,6 @@ flag_save_plots = False
 flag_do_evaluation = False
 
 
-<<<<<<< HEAD
-# flag to set volume calculation
-flag_volume = 0.8 # truncated_cone_cst
-                  # "cylindrical"
-                            # if to use constant Vd, give number of Vd. e.g. 0.8
-
-=======
->>>>>>> gotm
 # -----------------------------
 # scenarios
 
