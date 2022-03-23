@@ -44,7 +44,7 @@ flag_interpolate_watertemp = False # make interpolation of CLM temperature field
 flag_calcheat  = True # if false use saved lake heat (otherwise use saved lake heat), for ALBM done on the cluster. 
 
 # whether or not to save calculated lake heat (can only be true if flag_calcheat is true)
-flag_savelakeheat = False
+flag_savelakeheat = True
 
 flag_get_values = False
 
@@ -59,10 +59,6 @@ flag_save_plots = False
 flag_do_evaluation = False
 
 
-# flag to set volume calculation
-flag_volume = 0.8 # truncated_cone_cst
-                            # if to use constant Vd, give number of Vd. e.g. 0.8
-
 # -----------------------------
 # scenarios
 
@@ -76,7 +72,9 @@ flag_ref = 'pre-industrial'  # 'pre-industrial': first 30 years (1900-1929 for s
 
 #flag_ref =  1971  # 1971 or any integer: year as a reference 
 
-
+flag_volume = 'cylindrical' #,'truncated_cone_cst' # 'cylindrical' for original calculation with cylindrical lakes
+                            # 'truncated_cone_cst': use constant median Vd calculated from GLOBathy
+                            # 
 
 
 # -----------------------------------------------------------
@@ -100,8 +98,8 @@ indir_lakedata   = basepath + '/data/auxiliary_data/' # directory where lake fra
 # -----------------------------------------------------------
 # MODELS & FORCINGS
 
-models      = ['CLM45','SIMSTRAT-UoG'] #, 'ALBM']#,'GOTM']#,'VIC-LAKE','LAKE']
-forcings    = ['gfdl-esm2m','ipsl-cm5a-lr','hadgem2-es','miroc5'] #,'miroc5']
+models      = ['ALBM', 'CLM45','SIMSTRAT-UoG','GOTM']#'ALBM','GOTM']#,'VIC-LAKE','LAKE']
+forcings    = ['gfdl-esm2m','hadgem2-es','ipsl-cm5a-lr','miroc5']
 experiments = ['historical','future']
 
 
@@ -147,6 +145,17 @@ rho_liq = 1000     # [kg/m2] density liquid water
 rho_ice = 0.917e3  # [kg/m2] density ice
 
 
+# -----------------------------------------------------------
+# VOLUME CALCULATION
+# flag to set volume calculation
+from calc_volumes import *
+
+
+if flag_volume == 'truncated_cone_cst':
+    Vd = calc_median_Vd(indir_lakedata)
+    flag_volume = Vd
+
+
 #%%
 # -------------------------------------------------------------------------
 # PREPROCESS raw ISIMIP variables
@@ -185,7 +194,6 @@ if flag_calcheat:
     #from calc_volumes  import *
     from calc_lakeheat import *
 
-    #volume_per_layer = calc_volume_per_layer(flag_scenario, indir_lakedata, years_grand, start_year,end_year, resolution, models,outdir)
     #lakeheat = calc_lakeheat(models,forcings,future_experiment, indir_lakedata, years_grand, resolution,outdir, years_isimip,start_year, end_year, flag_scenario, flag_savelakeheat, rho_liq, cp_liq, rho_ice, cp_ice)
     lakeheat = calc_lakeheat_with_volume(models,forcings,future_experiment, indir_lakedata, years_grand, resolution,outdir, years_isimip,start_year, end_year, flag_scenario, flag_savelakeheat, flag_volume, rho_liq, cp_liq, rho_ice, cp_ice)
 else: 
