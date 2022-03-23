@@ -84,7 +84,7 @@ def plot_forcings_allmodels(flag_save_plots, plotdir, models,forcings, lakeheat,
     # all forcings in a row per list of models 
     nmodels = len(lakeheat)
     nforcings = len(lakeheat[list(lakeheat.keys())[0]])
-    f,ax = plt.subplots(nmodels,nforcings, figsize=(12,10))
+    f,ax = plt.subplots(nmodels,nforcings, figsize=(14,10))
     x_values = np.asarray(years_analysis)
     labels = ['(a)','(b)','(c)','(d)','(e)','(f)','(g)','(h)','(i)','(j)','(k)', '(l)','(m)','(n)','(o)','(p)','(q)','(r)','(s)']
 
@@ -102,6 +102,7 @@ def plot_forcings_allmodels(flag_save_plots, plotdir, models,forcings, lakeheat,
             if model == 'CLM45': ax[nplot].set_ylim(-7e20,10e20)
             if model == 'SIMSTRAT-UoG': ax[nplot].set_ylim(-0.5e20,2e20)
             if model == 'ALBM': ax[nplot].set_ylim(-0.5e20,1.5e20)
+            if model == 'GOTM': ax[nplot].set_ylim(-0.4e20,1.4e20)
 
             if nplot == 0 or nplot ==4 or nplot==8 or nplot==12 : ax[nplot].set_ylabel('Energy [J]')
             if nplot < 4: ax[nplot].set_title(forcing, loc='right')
@@ -110,10 +111,10 @@ def plot_forcings_allmodels(flag_save_plots, plotdir, models,forcings, lakeheat,
             nplot = nplot+1
 
     f.tight_layout()#rect=[0, 0.03, 1, 0.95])
-    plt.text(-0.03, 0.94, models[0], fontsize=14, transform=plt.gcf().transFigure, fontweight = 'bold')       
-    plt.text(-0.09, 0.61, models[1], fontsize=14, transform=plt.gcf().transFigure, fontweight = 'bold')            
-    plt.text(-0.03, 0.30, models[2], fontsize=14, transform=plt.gcf().transFigure, fontweight = 'bold')            
-    plt.text(-0.03, 0.2, models[3], fontsize=14, transform=plt.gcf().transFigure, fontweight = 'bold')            
+    plt.text(-0.03, 0.96, models[0], fontsize=14, transform=plt.gcf().transFigure, fontweight = 'bold')       
+    plt.text(-0.09, 0.72, models[1], fontsize=14, transform=plt.gcf().transFigure, fontweight = 'bold')            
+    plt.text(-0.03, 0.46, models[2], fontsize=14, transform=plt.gcf().transFigure, fontweight = 'bold')            
+    plt.text(-0.03, 0.23, models[3], fontsize=14, transform=plt.gcf().transFigure, fontweight = 'bold');            
 
     if flag_save_plots:
        plt.savefig(plotdir+'heat_acc_per_forcing'+'.jpeg',dpi=1000, bbox_inches='tight')
