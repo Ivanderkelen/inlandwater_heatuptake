@@ -244,9 +244,5 @@ def calc_lakeheat_with_volume(models,forcings,future_experiment, indir_lakedata,
         del lakeheat_model, lakeheat_forcing
     # save calculated lake heat (this needs to be cleaned up before continuing working on code.)
 
-    # Save according to scenario flag
-    if flag_savelakeheat:
-        lakeheat_filename = 'lakeheat_'+flag_scenario+'.npy'
-        np.save(outdir+lakeheat_filename, lakeheat) 
 
     return lakeheat
