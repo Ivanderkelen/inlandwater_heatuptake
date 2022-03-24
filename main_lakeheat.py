@@ -41,7 +41,7 @@ flag_preprocess = False # this is done on the cluster, using the same scripts
 
 flag_interpolate_watertemp = False # make interpolation of CLM temperature fields. (takes time)
 
-flag_calcheat  = True # if false use saved lake heat (otherwise use saved lake heat), for ALBM done on the cluster. 
+flag_calcheat  = False # if false use saved lake heat (otherwise use saved lake heat), for ALBM done on the cluster. 
 
 # whether or not to save calculated lake heat (can only be true if flag_calcheat is true)
 flag_savelakeheat = False
@@ -161,13 +161,13 @@ if flag_volume == 'truncated_cone_cst':
 # -------------------------------------------------------------------------
 # SENSITIVITY STUDY ON LAKE HEAT
 # -------------------------------------------------------------------------
-if flag_calcheat:
-    from calc_lakeheat import *
 
-    # flag to set volume calculation
-    vol_develoment_params = np.arange(0.3,1.35,0.05) # truncated_cone_cst
+from calc_lakeheat import *
+
+# flag to set volume calculation
+vol_develoment_params = np.arange(0.3,1.35,0.05) # truncated_cone_cst
                     # "cylindrical"
-                                # if to use constant Vd, give number of Vd. e.g. 0.8
+if flag_calcheat:                               # if to use constant Vd, give number of Vd. e.g. 0.8
     lakeheat_sensitivity = {}
     for n,vd in enumerate(vol_develoment_params):
         print('calculating '+str(n+1)+ ' from '+str(len(vol_develoment_params))+' parameters')
@@ -176,13 +176,13 @@ if flag_calcheat:
 
     # Save according to scenario flag
     if flag_savelakeheat:
-        lakeheat_filename = 'lakeheat_'+flag_scenario+'_Vd.npy'
+        lakeheat_filename = 'lakeheat_'+flag_scenario+'_vd_sensitivity.npy'
         np.save(outdir+lakeheat_filename, lakeheat_sensitivity) 
 
 else: 
 
     lakeheat_sensitivity = np.load(outdir+'lakeheat_climate_vd_sensitivity.npy',allow_pickle='TRUE').item()
-    lakeheat_cylindrical = np.load(outdir+'lakeheat_climate_climate.npy',allow_pickle='TRUE').item()
+    lakeheat_cylindrical = np.load(outdir+'lakeheat_climate.npy',allow_pickle='TRUE').item()
     lakeheat_cstVd = np.load(outdir+'lakeheat_climate_truncated_cstVd.npy',allow_pickle='TRUE').item()
 
 
@@ -201,7 +201,7 @@ lakeheat_anom = {}
 lakeheat_anom_ts = {}
 
 # colors
-cmap = mpl.cm.get_cmap('summer',20)
+
 # extract all colors from the .jet map
 
 for vd in vol_develoment_params: 
@@ -215,8 +215,13 @@ lakeheat_anom_ts_cylindrical = timeseries(lakeheat_anom_cylindrical)
 lakeheat_anom_cstVd = calc_anomalies(lakeheat_cstVd, flag_ref,years_analysis)
 lakeheat_anom_ts_cstVd = timeseries(lakeheat_anom_cstVd)
 
+#%%
+
+cmap = mpl.cm.Greys(np.linspace(0, 1, len(vol_develoment_params)))
+
+
 nplot=0
-f,ax = plt.subplots(2,2, figsize=(8,7))
+f,ax = plt.subplots(3,1, figsize=(6,12))
 x_values = np.asarray(years_analysis)
 
 ax = ax.ravel()
@@ -225,28 +230,28 @@ ax = ax.ravel()
 for model in models:
         
 
-    for nplot,forcing in enumerate(forcings):
+    forcing = forcings[0]
 
-        line_zero = ax[nplot].plot(x_values, np.zeros(np.shape(x_values)), linewidth=0.5,color='darkgray')
-        for n,vd in enumerate(vol_develoment_params):
-            line1 = ax[nplot].plot(x_values,lakeheat_anom_ts[vd][model][forcing],color=cmap[n],label=None)
-        
-        line2 = ax[nplot].plot(x_values,lakeheat_anom_ts_cstVd[model][forcing],color='tab:red',label='cylindrical')
-        line3 = ax[nplot].plot(x_values,lakeheat_anom_ts_cylindrical[model][forcing],color='tab:green',label='Vd = ?')
+    line_zero = ax[nplot].plot(x_values, np.zeros(np.shape(x_values)), linewidth=0.5,color='darkgray')
+    for n,vd in enumerate(vol_develoment_params):
+        line1 = ax[nplot].plot(x_values,lakeheat_anom_ts[vd][model][forcing],color=cmap[n],label=None)
+    
+    line2 = ax[nplot].plot(x_values,lakeheat_anom_ts_cstVd[model][forcing],color='tab:red',label='cylindrical')
+    line3 = ax[nplot].plot(x_values,lakeheat_anom_ts_cylindrical[model][forcing],color='magenta',label='Vd = 1.19')
 
-        #ax[nplot].legend(vol_develoment_params)
-        ax[nplot].set_xlim(1900,2021)
-        ax[nplot].set_xticks(ticks=xticks)
-        #ax[nplot].set_ylim(-0.5e20,1.5e20)
-        ax[nplot].set_ylabel('Energy [J]')
-        ax[nplot].set_title(forcing, pad=15)
-        nplot = nplot+1
+    ax[nplot].legend()
+    ax[nplot].set_xlim(1900,2021)
+    ax[nplot].set_xticks(ticks=xticks)
+    #ax[nplot].set_ylim(-0.5e20,1.5e20)
+    ax[nplot].set_ylabel('Energy [J]')
+    ax[nplot].set_title(model + ' '+forcing, pad=15)
+    nplot = nplot+1
 
-    f.suptitle(model+' sensitivities for Vd parameter', fontsize=16)
-    f.tight_layout(rect=[0, 0.03, 1, 0.95])
+f.suptitle('Lake heat anomalies sensitivity to volume calculation \n Range for Vd from 0.3 to 1.3', fontsize=16)
+f.tight_layout(rect=[0, 0.03, 1, 0.95])
 
-    if flag_save_plots:
-        plt.savefig(plotdir+model+'heat_acc_per_forcing'+'.png',dpi=300)
+if flag_save_plots:
+    plt.savefig(plotdir+model+'heat_acc_per_forcing'+'.png',dpi=300)
 
 
 #%%
