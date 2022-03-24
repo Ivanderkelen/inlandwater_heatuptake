@@ -236,8 +236,8 @@ for model in models:
     for n,vd in enumerate(vol_develoment_params):
         line1 = ax[nplot].plot(x_values,lakeheat_anom_ts[vd][model][forcing],color=cmap[n],label=None, alpha=0.5)
     
-    line2 = ax[nplot].plot(x_values,lakeheat_anom_ts_cstVd[model][forcing],color='tab:red',label='cylindrical')
-    line3 = ax[nplot].plot(x_values,lakeheat_anom_ts_cylindrical[model][forcing],color='darkorange',label='Vd = 1.19')
+    line2 = ax[nplot].plot(x_values,lakeheat_anom_ts_cstVd[model][forcing],color='darkorange',label='Vd = 1.19')
+    line3 = ax[nplot].plot(x_values,lakeheat_anom_ts_cylindrical[model][forcing],color='tab:red',label='cylindrical')
     if nplot == 0: 
         ax[nplot].legend(frameon=False)
     ax[nplot].set_xlim(1900,2021)
@@ -251,90 +251,8 @@ f.suptitle('Lake heat anomalies sensitivity to volume calculation \n Range for V
 f.tight_layout(rect=[0, 0.03, 1, 0.95])
 
 if flag_save_plots:
-    plt.savefig('sensitivity_volume_'+forcing+'.png',dpi=300)
+    plt.savefig(outdir+'plots/sensitivity_volume_'+forcing+'.png',dpi=300)
 
 
-#%%
-# -------------------------------------------------------------------------
-# CALCULATE VOLUMES and LAKEHEAT  
-# loads hydrolakes + GLDB data to calculate lake volume per layer 
-# -------------------------------------------------------------------------
-
-if flag_calcheat: 
-    #from calc_volumes  import *
-    from calc_lakeheat import *
-
-    #lakeheat = calc_lakeheat(models,forcings,future_experiment, indir_lakedata, years_grand, resolution,outdir, years_isimip,start_year, end_year, flag_scenario, flag_savelakeheat, rho_liq, cp_liq, rho_ice, cp_ice)
-    lakeheat = calc_lakeheat_with_volume(models,forcings,future_experiment, indir_lakedata, years_grand, resolution,outdir, years_isimip,start_year, end_year, flag_scenario, flag_savelakeheat, flag_volume, rho_liq, cp_liq, rho_ice, cp_ice)
-else: 
-
-    from load_lakeheat_albm import *
-
-    # load from file based on scenario: (ALBM separate as these are calculated on HPC)
-    if flag_scenario == 'climate':
-        lakeheat = np.load(outdir+'lakeheat_climate.npy',allow_pickle='TRUE').item()
-        lakeheat_albm = load_lakeheat_albm(outdir,flag_scenario,years_analysis)
-       
-    #    lakeheat_albm = load_lakeheat_albm(outdir,flag_scenario,years_analysis,forcings)
-    elif flag_scenario == 'reservoirs':
-        lakeheat = np.load(outdir+'lakeheat_reservoirs.npy',allow_pickle='TRUE').item()
-        lakeheat_albm = load_lakeheat_albm(outdir,flag_scenario,years_analysis)
-        
-    elif flag_scenario == 'both':
-        lakeheat = np.load(outdir+'lakeheat_both.npy',allow_pickle='TRUE').item()
-        lakeheat_albm = load_lakeheat_albm(outdir,flag_scenario,years_analysis)
-
-    # add ALBM dictionary to lakeheat dict. 
-    lakeheat.update(lakeheat_albm)
-
-
-#%%
-# -------------------------------------------------------------------------
-# GET VALUES for paper
-# -------------------------------------------------------------------------
-
-if flag_get_values: 
-    from get_values_lakeheat import * 
-    get_values(outdir,flag_ref, years_analysis, indir_lakedata, resolution)
-
-#%%
-# -------------------------------------------------------------------------
-# PLOTTING
-# Do the plotting - works with internal flags
-# data aggregation is done from within functions 
-# -------------------------------------------------------------------------
-
-if flag_plotting_forcings: 
-    from plotting_lakeheat import * 
-    plot_forcings(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, years_analysis,outdir)
-
-if flag_plotting_paper: 
-    from plotting_lakeheat import * 
-    #from plotting_casestudies import *
-    
-    do_plotting(flag_save_plots, plotdir, models , forcings, lakeheat, flag_ref, years_analysis,outdir)
-    plot_forcings_allmodels(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, years_analysis,outdir)
-
-    #plot_casestudies(basepath,indir_lakedata,outdir,flag_ref,years_analysis)
-
-if flag_plotting_input_maps: # plotting of lake/reservoir area fraction and lake depth
-    from plotting_globalmaps import *
-    do_plotting_globalmaps(indir_lakedata, plotdir, years_grand,start_year,end_year)
-
-
-#%%
-# -------------------------------------------------------------------------
-# EVALUATION
-# 
-# Do spot evaluations 
-# -------------------------------------------------------------------------
-
-if flag_do_evaluation: 
-    from preprocess_obs import * 
-    from do_evaluation import *
-    preprocess_obs(basepath)
-    do_evaluation()
-
-# %%
 
 # %%
