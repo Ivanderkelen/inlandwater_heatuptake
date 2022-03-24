@@ -54,7 +54,7 @@ flag_plotting_paper = False
 
 flag_plotting_input_maps = False
 
-flag_save_plots = False
+flag_save_plots = True
 
 flag_do_evaluation = False
 
@@ -98,7 +98,7 @@ indir_lakedata   = basepath + '/data/auxiliary_data/' # directory where lake fra
 # -----------------------------------------------------------
 # MODELS & FORCINGS
 
-models      = ['SIMSTRAT-UoG', 'CLM45','GOTM'] # 'ALBM']#,'VIC-LAKE','LAKE']
+models      = ['CLM45','SIMSTRAT-UoG','GOTM'] # 'ALBM']#,'VIC-LAKE','LAKE']
 forcings    = ['gfdl-esm2m']#,'ipsl-cm5a-lr','hadgem2-es','miroc5'] #,'miroc5']
 
 experiments = ['historical','future']
@@ -217,8 +217,8 @@ lakeheat_anom_ts_cstVd = timeseries(lakeheat_anom_cstVd)
 
 #%%
 
-cmap = mpl.cm.Greys(np.linspace(0, 1, len(vol_develoment_params)))
-
+cmap = mpl.cm.viridis(np.linspace(0, 1, len(vol_develoment_params)))
+cmap = np.flip(cmap,axis=0)
 
 nplot=0
 f,ax = plt.subplots(3,1, figsize=(6,12))
@@ -232,26 +232,26 @@ for model in models:
 
     forcing = forcings[0]
 
-    line_zero = ax[nplot].plot(x_values, np.zeros(np.shape(x_values)), linewidth=0.5,color='darkgray')
+    line_zero = ax[nplot].plot(x_values, np.zeros(np.shape(x_values)), linewidth=0.8,color='darkgray')
     for n,vd in enumerate(vol_develoment_params):
-        line1 = ax[nplot].plot(x_values,lakeheat_anom_ts[vd][model][forcing],color=cmap[n],label=None)
+        line1 = ax[nplot].plot(x_values,lakeheat_anom_ts[vd][model][forcing],color=cmap[n],label=None, alpha=0.5)
     
     line2 = ax[nplot].plot(x_values,lakeheat_anom_ts_cstVd[model][forcing],color='tab:red',label='cylindrical')
-    line3 = ax[nplot].plot(x_values,lakeheat_anom_ts_cylindrical[model][forcing],color='magenta',label='Vd = 1.19')
-
-    ax[nplot].legend()
+    line3 = ax[nplot].plot(x_values,lakeheat_anom_ts_cylindrical[model][forcing],color='darkorange',label='Vd = 1.19')
+    if nplot == 0: 
+        ax[nplot].legend(frameon=False)
     ax[nplot].set_xlim(1900,2021)
     ax[nplot].set_xticks(ticks=xticks)
     #ax[nplot].set_ylim(-0.5e20,1.5e20)
     ax[nplot].set_ylabel('Energy [J]')
-    ax[nplot].set_title(model + ' '+forcing, pad=15)
+    ax[nplot].set_title(model + ' '+forcing, pad=15, loc='right')
     nplot = nplot+1
 
 f.suptitle('Lake heat anomalies sensitivity to volume calculation \n Range for Vd from 0.3 to 1.3', fontsize=16)
 f.tight_layout(rect=[0, 0.03, 1, 0.95])
 
 if flag_save_plots:
-    plt.savefig(plotdir+model+'heat_acc_per_forcing'+'.png',dpi=300)
+    plt.savefig('sensitivity_volume_'+forcing+'.png',dpi=300)
 
 
 #%%
