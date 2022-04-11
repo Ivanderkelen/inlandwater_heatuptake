@@ -18,6 +18,7 @@ import pandas as pd
 import os
 from osgeo import gdal
 from load_lakeheat_albm import  *
+from datetime import timedelta
 
 # ------------------------------------------------------------------------
 # Data Agggregation functions
@@ -65,17 +66,44 @@ def ensmean_ts_per_model(indict):
 
 def ensmean_ts(indict):
     # ensemble mean timeseries
+    import matplotlib.pyplot as plt
     ens_summed = {}
     for k in indict: 
         tempdict = {}
+        tempdict2 = {}
         for f in indict[k]:
             tempdict[f] = np.nansum(indict[k][f],axis=(1,2))
             tempdict = cor_for_albm(tempdict,k,f)
-        stacked = np.stack(tempdict.values())
+            tempdict2[f] = np.where(tempdict==0,np.nan,tempdict[f])
+        stacked = np.stack(tempdict2.values())
         ens_summed[k] = np.nanmean(stacked,axis=0)
 
     stacked_per_model = np.stack(ens_summed.values())
     ensmean_allmodels = np.nanmean(stacked_per_model,axis=0)
+    return ensmean_allmodels
+
+def ensmean_ts_twodicts(indict1,indict2):
+    # ensemble mean timeseries
+    stacked_dict = {}
+    i=0
+    for indict in (indict1,indict2):
+        ens_summed = {}
+        for k in indict: 
+            tempdict = {}
+            tempdict2 = {}
+            for f in indict[k]:
+                tempdict[f] = np.nansum(indict[k][f],axis=(1,2))
+                tempdict = cor_for_albm(tempdict,k,f)
+                tempdict2[f] = np.where(tempdict==0,np.nan,tempdict[f])
+            stacked = np.stack(tempdict2.values())
+            ens_summed[k] = np.nanmean(stacked,axis=0)
+
+        stacked_per_model = np.stack(ens_summed.values())
+        stacked_dict[i] = stacked_per_model
+        i=i+1
+
+    stacked_per_dict = np.stack(stacked_dict.values())
+    ensmean_allmodels = np.nanmean(stacked_per_dict,axis=0)
     return ensmean_allmodels
 
 def ens_std_ts(indict):
@@ -83,9 +111,11 @@ def ens_std_ts(indict):
     concat_stacked = np.array([])
     for k in indict: 
         tempdict = {}
+        tempdict2 = {}
         for f in indict[k]:
             tempdict[f] = np.nansum(indict[k][f],axis=(1,2))
             tempdict = cor_for_albm(tempdict,k,f)
+            tempdict2[f] = np.where(tempdict==0,np.nan,tempdict[f])
         stacked = np.stack(tempdict.values())
         # put all forcings of models together. 
         if concat_stacked.size == 0:
@@ -96,6 +126,7 @@ def ens_std_ts(indict):
     ens_std = np.nanstd(concat_stacked,axis=0)
 
     return ens_std
+
 
 
 def ensmin_ts_per_model(indict):
@@ -253,13 +284,21 @@ def calc_anomalies(lakeheat, flag_ref, years_analysis):
 
    # if indict is not a dictionary
     if type(lakeheat) is not dict:
-        if flag_ref == 'pre-industrial':   # period of first 30 years of simulation (1900-1929)
-            lakeheat_ref_forcing = np.nanmean(lakeheat[0:30,:,:])
-        elif isinstance(flag_ref,int):
-            lakeheat_ref_forcing = lakeheat[years_analysis.index(flag_ref),:,:]
-    # subtract reference to calculate anomaly 
-        lakeheat_anom = lakeheat - lakeheat_ref_forcing
-
+        if np.ndim(lakeheat)>1:
+            if flag_ref == 'pre-industrial':   # period of first 30 years of simulation (1900-1929)
+                lakeheat_ref_forcing = np.nanmean(lakeheat[0:30,:,:])
+            elif isinstance(flag_ref,int):
+                lakeheat_ref_forcing = lakeheat[years_analysis.index(flag_ref),:,:]
+        # subtract reference to calculate anomaly 
+            lakeheat_anom = lakeheat - lakeheat_ref_forcing
+        
+        else: 
+            if flag_ref == 'pre-industrial':   # period of first 30 years of simulation (1900-1929)
+                lakeheat_ref_forcing = np.nanmean(lakeheat[0:30])
+            elif isinstance(flag_ref,int):
+                lakeheat_ref_forcing = lakeheat[years_analysis.index(flag_ref)]
+        # subtract reference to calculate anomaly 
+            lakeheat_anom = lakeheat - lakeheat_ref_forcing
     else:    
 
         lakeheat_anom = {}
@@ -549,7 +588,7 @@ def load_lakeheat_totalclimate(outdir,flag_ref, years_analysis):
     return (totheat_climate, totheat_climate_std)
 
 
-def calc_reservoir_warming(outdir):
+def calc_reservoir_warming(outdir,years_analysis):
 
     """  Calculate reservoir warming (difference total and (climate+reservoir expansion)
          and save to file
@@ -558,6 +597,7 @@ def calc_reservoir_warming(outdir):
     lakeheat_climate = np.load(outdir+'lakeheat_climate.npy',allow_pickle='TRUE').item()
     lakeheat_res = np.load(outdir+'lakeheat_reservoirs.npy',allow_pickle='TRUE').item()
     lakeheat_both = np.load(outdir+'lakeheat_both.npy',allow_pickle='TRUE').item()
+
 
     lakeheat_onlyresclimate = {}
     indict = {}
@@ -570,8 +610,56 @@ def calc_reservoir_warming(outdir):
 
     lakeheat_filename = 'lakeheat_onlyresclimate.npy'
     np.save(outdir+lakeheat_filename, lakeheat_onlyresclimate) 
+ 
+def load_lakeheat_no_movingmean(scenario,outdir,flag_ref, years_analysis):
+    lakeheat= np.load(outdir+'lakeheat_'+scenario+'.npy',allow_pickle='TRUE').item()
+    
+    if not scenario =='onlyresclimate':
+        lakeheat_albm = load_lakeheat_albm(outdir,scenario,years_analysis)
+        lakeheat.update(lakeheat_albm)
+        del lakeheat_albm
+
+    lakeheat_anom = calc_anomalies(lakeheat, flag_ref, years_analysis)
+
+    anom_ensmean = ensmean_ts(lakeheat_anom)
+    anom_std     = ens_std_ts(lakeheat_anom)
+    del lakeheat_anom, lakeheat
+
+    return (anom_ensmean, anom_std)
 
 
+def calc_ensmean_std_lakes_and_reservoirs_heatuptake(outdir,flag_ref, years_analysis):
+    lakeheat_climate = np.load(outdir+'lakeheat_climate.npy',allow_pickle='TRUE').item()
+    scenario = 'climate'
+    lakeheat_albm = load_lakeheat_albm(outdir,'climate',years_analysis)
+    lakeheat_climate.update(lakeheat_albm)    
+    
+    lakeheat_climate_anom = calc_anomalies(lakeheat_climate, flag_ref,years_analysis)
+    #climate_anom_ensmean = ensmean_ts(lakeheat_climate_anom)
+    #climate_anom_std     = ens_std_ts(lakeheat_climate_anom)
+
+    lakeheat_onlyresclimate = np.load(outdir+'lakeheat_onlyresclimate.npy',allow_pickle='TRUE').item()
+    lakeheat_onlyresclimate_anom = calc_anomalies(lakeheat_onlyresclimate, flag_ref,years_analysis)
+
+    # sum both before calculating the mean. 
+    lakeheat_anom_summed = {}
+    tempdict = {}
+
+    for k,v in lakeheat_climate_anom.items():
+        lakeheat_anom_summed.update({k:tempdict})
+        for f , values in lakeheat_climate_anom[k].items():
+            if k == 'ALBM':
+                lakeheat_anom_summed[k][f] = values
+            else: 
+                lakeheat_anom_summed[k][f] = values+ lakeheat_onlyresclimate_anom[k].get(f, 0)
+ 
+    totheat_climate = ensmean_ts(lakeheat_anom_summed)
+    totheat_climate_std = ens_std_ts(lakeheat_anom_summed)
+
+    totheat_climate = ensmean_ts(lakeheat_climate_anom) + ensmean_ts(lakeheat_onlyresclimate_anom)
+
+
+    return (totheat_climate, totheat_climate_std)
 # create grid (1cel longitude, all latitudes)
 def make_grid(xmin,xmax,ymin,ymax,resolution):
         """
@@ -632,3 +720,102 @@ def calc_grid_area(res):
         areas_global[:,i]=areas_1d
 
     return areas_global
+
+def calc_ensmean_heatflux(indict,area,years_analysis):
+
+    """
+    Function to calculate the ensemble mean annual heat flux (W/m²)
+    """
+    # calculate number of seconds per year
+    nsecs = np.empty_like(years_analysis)
+    for t,year in enumerate(years_analysis):
+        nsecs[t] = timedelta(days=pd.Timestamp(year, 12, 31).dayofyear).total_seconds()
+    nsecs = nsecs[:-1]
+
+    # function starts here/ 
+    ens_summed = {}
+    for k in indict: 
+        tempdict = {}
+        tempdict2 = {}
+        fluxdict = {}
+        for f in indict[k]:
+            tempdict[f] = np.diff(indict[k][f],axis=0)
+            tempdict2[f] = np.nansum(tempdict[f],axis=(1,2))/(nsecs*area)
+            tempdict2 = cor_for_albm(tempdict2,k,f)
+            fluxdict[f] = np.where(tempdict2==0,np.nan,tempdict2[f])
+
+        stacked = np.stack(fluxdict.values())
+        ens_summed[k] = np.nanmean(stacked,axis=0)
+
+    stacked_per_model = np.stack(ens_summed.values())
+    ensmean_allmodels = np.nanmean(stacked_per_model,axis=0)
+    return ensmean_allmodels
+
+
+def ens_std_heatflux(indict,area,years_analysis):
+
+    """
+    Function to calculate the standard deviation of annual heat flux (W/m²)
+    """
+    # calculate number of seconds per year
+    nsecs = np.empty_like(years_analysis)
+    for t,year in enumerate(years_analysis):
+        nsecs[t] = timedelta(days=pd.Timestamp(year, 12, 31).dayofyear).total_seconds()
+    nsecs = nsecs[:-1]
+
+    # calculate standard deviation of timeseries
+    concat_stacked = np.array([])
+    for k in indict: 
+        tempdict = {}
+        tempdict2 = {}
+        fluxdict = {}
+        for f in indict[k]:
+            tempdict[f] = np.diff(indict[k][f],axis=0)
+            tempdict2[f] = np.nansum(tempdict[f],axis=(1,2))/(nsecs*area)
+            tempdict2 = cor_for_albm(tempdict2,k,f)
+            fluxdict[f] = np.where(tempdict2==0,np.nan,tempdict2[f])
+        stacked = np.stack(fluxdict.values())
+        # put all forcings of models together. 
+        if concat_stacked.size == 0:
+            concat_stacked = stacked
+        else:
+            concat_stacked = np.concatenate((concat_stacked,stacked),axis=0)
+    # calculate average over ensemble members
+    ens_std = np.nanstd(concat_stacked,axis=0)
+
+    return ens_std
+
+
+    
+def plot_heatstorage_ts(fn,start_year,end_year):
+    
+    da = pd.read_csv(outdir+'inlandwater_heatuptake_timeseries/heatstorage_'+fn+'.dat')
+
+    da = da.set_index('Unnamed: 0')
+    fig,ax = plt.subplots()
+
+
+    under_2std = da['Global mean heat storage [J]'] - da['Standard deviation heat storage [J]']
+    upper_2std = da['Global mean heat storage [J]'] + da['Standard deviation heat storage [J]']
+    da['Global mean heat storage [J]'].plot(ax=ax)
+    ax.fill_between(np.arange(start_year,end_year,1),under_2std,upper_2std, color='sandybrown',alpha=0.5)
+    ax.set_xlim(start_year,end_year)
+    ax.set_title('heat storage '+fn+' J')
+
+
+
+def plot_heatflux_ts(fn,start_year,end_year):
+    
+    da = pd.read_csv(outdir+'inlandwater_heatuptake_timeseries/heatflux_'+fn+'.dat')
+
+    da = da.set_index('Unnamed: 0')
+    fig,ax = plt.subplots()
+
+
+    under_2std = da['Global mean annual heat flux [W/m²]'] - da['Standard deviation annual heat flux [W/m²]']
+    upper_2std = da['Global mean annual heat flux [W/m²]'] + da['Standard deviation annual heat flux [W/m²]']
+    da['Global mean annual heat flux [W/m²]'].plot(ax=ax)
+    ax.fill_between(np.arange(start_year,end_year-1,1),under_2std,upper_2std, color='sandybrown',alpha=0.5)
+    ax.set_xlim(start_year,end_year-1)
+    ax.set_title('heat flux '+fn+' W/m²')
+

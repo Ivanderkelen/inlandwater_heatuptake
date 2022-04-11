@@ -70,6 +70,72 @@ def plot_forcings(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref,
 
 def plot_forcings_allmodels(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, years_analysis,outdir):
 
+
+    xticks = np.array([1900,1940,1980,2021])
+    xlims=(1900,2021)
+
+
+        #%% Plot raw heat uptake per model forcing 
+    # calculate anomalies
+    lakeheat_anom = calc_anomalies(lakeheat, flag_ref,years_analysis)
+    # Calculate timeseries of lake heat anomaly
+    lakeheat_anom_ts = timeseries(lakeheat_anom)
+
+    # Plotting functions 
+    # all forcings in a row per list of models 
+    nmodels = len(lakeheat)
+    nforcings = len(lakeheat[list(lakeheat.keys())[0]])
+    f,ax = plt.subplots(nmodels,nforcings, figsize=(14,10))
+    x_values = np.asarray(years_analysis)
+    labels = ['(a)','(b)','(c)','(d)','(e)','(f)','(g)','(h)','(i)','(j)','(k)', '(l)','(m)','(n)','(o)','(p)','(q)','(r)','(s)']
+
+    nplot=0
+    ax = ax.ravel()
+    for model in models:
+        
+        for forcing in forcings:
+
+            line_zero = ax[nplot].plot(x_values, np.zeros(np.shape(x_values)), linewidth=0.5,color='darkgray')
+            line1 = ax[nplot].plot(x_values,lakeheat_anom_ts[model][forcing], color='coral')
+            ax[nplot].set_xlim(xlims)
+            #ax[nplot].set_ylim(-0.22e19,0.82e19)
+            ax[nplot].set_xticks(ticks=xticks)
+            if model == 'CLM45': ax[nplot].set_ylim(-7e20,10e20)
+            if model == 'SIMSTRAT-UoG': ax[nplot].set_ylim(-0.5e20,2e20)
+            if model == 'ALBM': ax[nplot].set_ylim(-0.5e20,1.5e20)
+            if model == 'GOTM': ax[nplot].set_ylim(-0.4e20,1.4e20)
+
+            if nplot == 0 or nplot ==4 or nplot==8 or nplot==12 : ax[nplot].set_ylabel('Energy [J]')
+            if nplot < 4: ax[nplot].set_title(forcing, loc='right')
+            ax[nplot].text(0.02, 0.90, labels[nplot], transform=ax[nplot].transAxes, fontsize=12)
+
+            nplot = nplot+1
+
+    f.tight_layout()#rect=[0, 0.03, 1, 0.95])
+    plt.text(-0.03, 0.96, models[0], fontsize=14, transform=plt.gcf().transFigure, fontweight = 'bold')       
+    plt.text(-0.09, 0.72, models[1], fontsize=14, transform=plt.gcf().transFigure, fontweight = 'bold')            
+    plt.text(-0.03, 0.46, models[2], fontsize=14, transform=plt.gcf().transFigure, fontweight = 'bold')            
+    plt.text(-0.03, 0.23, models[3], fontsize=14, transform=plt.gcf().transFigure, fontweight = 'bold');            
+
+    if flag_save_plots:
+       plt.savefig(plotdir+'heat_acc_per_forcing'+'.jpeg',dpi=1000, bbox_inches='tight')
+
+
+def plot_forcings_allmodelsµFranciscostyle(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, years_analysis,outdir):
+
+
+
+    mpl.rc('axes',edgecolor='b')
+    mpl.rc('axes',labelcolor='b')
+    mpl.rc('xtick',color='b')
+    mpl.rc('xtick',labelsize=12)
+    mpl.rc('ytick',color='b')
+    mpl.rc('ytick',labelsize=12)
+    mpl.rc('axes',titlesize=14)
+    mpl.rc('axes',labelsize=12)
+    mpl.rc('legend',fontsize='b')
+    mpl.rc('text',color='b')
+
     xticks = np.array([1900,1940,1980,2021])
     xlims=(1900,2021)
 
@@ -122,10 +188,7 @@ def plot_forcings_allmodels(flag_save_plots, plotdir, models,forcings, lakeheat,
 
 
 
-
-
-
-def do_plotting(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, years_analysis,outdir):
+def do_plotting(flag_save_plots, flag_save_variables, plotdir,  flag_ref, years_analysis,outdir):
     # ------------------------------------------------
     # load saved heat storages for different scenarios
 
@@ -148,7 +211,7 @@ def do_plotting(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, y
         lakeheat_both_anom_std_ts ) = load_lakeheat('both',outdir, flag_ref, years_analysis)
         
     # calculate reservoir warming (difference total and (climate+reservoir expansion))
-    calc_reservoir_warming(outdir)
+    calc_reservoir_warming(outdir,years_analysis)
 
     (lakeheat_onlyresclimate_anom_ensmean_ts, 
         lakeheat_onlyresclimate_anom_ensmin_ts, 
@@ -161,7 +224,19 @@ def do_plotting(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, y
         riverheat_anom_std_ts ) = load_riverheat(outdir)
 
     # load river heat variables
+    if flag_save_variables: 
+        years = years_analysis[years_analysis.index(1900):years_analysis.index(2021)]
+        
+        data = np.stack([lakeheat_climate_anom_ensmean_ts, lakeheat_climate_anom_std_ts],axis=1)
+        # change name!!!!!!
+        df = pd.DataFrame(data =data, index = years,columns=['Global mean heat storage [J]','Standard deviation heat storage [J]'] )
+        df.to_csv(outdir+'inlandwater_heatuptake_timeseries/heatstorage_natural_lake_1900-2021_movingmean.dat')
 
+        data = np.stack([lakeheat_onlyresclimate_anom_ensmean_ts, lakeheat_onlyresclimate_anom_std_ts],axis=1)
+
+        df = pd.DataFrame(data =data, index = years,columns=['Global mean heat storage [J]','Standard deviation heat storage [J]'] )
+        df.to_csv(outdir+'inlandwater_heatuptake_timeseries/heatstorage_reservoir_1900-2021_movingmean.dat')
+        #return (anom_ensmean, anom_ensmin, anom_ensmax, anom_std)
     # general plotting settings: 
     xticks = np.array([1900,1920,1940,1960,1980,2000,2021])
     xlims=(1900,2021)
