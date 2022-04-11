@@ -46,7 +46,7 @@ flag_interpolate_watertemp = False # make interpolation of CLM temperature field
 flag_calcheat  = False # if false use saved lake heat (otherwise use saved lake heat), for ALBM done on the cluster. 
 
 # whether or not to save calculated lake heat (can only be true if flag_calcheat is true)
-flag_savelakeheat = True
+flag_savelakeheat = False
 
 flag_get_values = True
 
@@ -67,7 +67,7 @@ flag_do_evaluation = False
 # scenarios
 
 # flag to set which scenario is used for heat calculation
-flag_scenario = 'both'  # 'climate'    : only climate change (lake cover constant at 2005 level)
+flag_scenario = 'climate'  # 'climate'    : only climate change (lake cover constant at 2005 level)
                               # 'reservoirs' : only reservoir construction (temperature constant at 1900 level)
                               # 'both'       : reservoir construction and climate
 
@@ -102,7 +102,7 @@ indir_lakedata   = basepath + '/data/auxiliary_data/' # directory where lake fra
 # -----------------------------------------------------------
 # MODELS & FORCINGS
 
-models      = [ 'CLM45','SIMSTRAT-UoG','ALBM','GOTM']#'ALBM','GOTM']#,'VIC-LAKE','LAKE']
+models      = [ 'CLM45','SIMSTRAT-UoG','GOTM','ALBM']#,'GOTM']#'ALBM','GOTM']#,'VIC-LAKE','LAKE']
 forcings    = ['gfdl-esm2m','hadgem2-es','ipsl-cm5a-lr','miroc5']
 experiments = ['historical','future']
 
@@ -398,7 +398,7 @@ if flag_plotting_paper:
     
     do_plotting(flag_save_plots, flag_save_variables, plotdir, flag_ref, years_analysis,outdir)
     plot_forcings_allmodels(flag_save_plots,  plotdir, models,forcings, lakeheat, flag_ref, years_analysis,outdir)
-
+    plot_forcings_allmodels_Franciscostyle(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, years_analysis,outdir)
     #plot_casestudies(basepath,indir_lakedata,outdir,flag_ref,years_analysis)
 
 if flag_plotting_input_maps: # plotting of lake/reservoir area fraction and lake depth

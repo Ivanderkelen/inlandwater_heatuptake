@@ -121,20 +121,21 @@ def plot_forcings_allmodels(flag_save_plots, plotdir, models,forcings, lakeheat,
        plt.savefig(plotdir+'heat_acc_per_forcing'+'.jpeg',dpi=1000, bbox_inches='tight')
 
 
-def plot_forcings_allmodelsµFranciscostyle(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, years_analysis,outdir):
+def plot_forcings_allmodels_Franciscostyle(flag_save_plots, plotdir, models,forcings, lakeheat, flag_ref, years_analysis,outdir):
 
 
 
-    mpl.rc('axes',edgecolor='b')
-    mpl.rc('axes',labelcolor='b')
-    mpl.rc('xtick',color='b')
-    mpl.rc('xtick',labelsize=12)
-    mpl.rc('ytick',color='b')
-    mpl.rc('ytick',labelsize=12)
+    mpl.rc('axes',edgecolor='k')
+    mpl.rc('axes',labelcolor='k')
+    mpl.rc('xtick',color='k')
+    mpl.rc('xtick',labelsize=14)
+    mpl.rc('ytick',color='k')
+    mpl.rc('ytick',labelsize=14)
     mpl.rc('axes',titlesize=14)
-    mpl.rc('axes',labelsize=12)
-    mpl.rc('legend',fontsize='b')
-    mpl.rc('text',color='b')
+    mpl.rc('axes',labelsize=16)
+    mpl.rc('legend', fontsize='large')
+    mpl.rc('text', color='k')
+    mpl.rc ('axes', linewidth=2)
 
     xticks = np.array([1900,1940,1980,2021])
     xlims=(1900,2021)
@@ -161,7 +162,7 @@ def plot_forcings_allmodelsµFranciscostyle(flag_save_plots, plotdir, models,for
         for forcing in forcings:
 
             line_zero = ax[nplot].plot(x_values, np.zeros(np.shape(x_values)), linewidth=0.5,color='darkgray')
-            line1 = ax[nplot].plot(x_values,lakeheat_anom_ts[model][forcing], color='coral')
+            line1 = ax[nplot].plot(x_values,lakeheat_anom_ts[model][forcing], color='coral',linewidth=2)
             ax[nplot].set_xlim(xlims)
             #ax[nplot].set_ylim(-0.22e19,0.82e19)
             ax[nplot].set_xticks(ticks=xticks)
@@ -170,9 +171,10 @@ def plot_forcings_allmodelsµFranciscostyle(flag_save_plots, plotdir, models,for
             if model == 'ALBM': ax[nplot].set_ylim(-0.5e20,1.5e20)
             if model == 'GOTM': ax[nplot].set_ylim(-0.4e20,1.4e20)
 
-            if nplot == 0 or nplot ==4 or nplot==8 or nplot==12 : ax[nplot].set_ylabel('Energy [J]')
+            if nplot == 0 or nplot ==4 or nplot==8 or nplot==12 : ax[nplot].set_ylabel('Energy (J)')
             if nplot < 4: ax[nplot].set_title(forcing, loc='right')
             ax[nplot].text(0.02, 0.90, labels[nplot], transform=ax[nplot].transAxes, fontsize=12)
+            ax[nplot].grid(which='major', axis='both',color='dimgray')
 
             nplot = nplot+1
 
@@ -183,7 +185,7 @@ def plot_forcings_allmodelsµFranciscostyle(flag_save_plots, plotdir, models,for
     plt.text(-0.03, 0.23, models[3], fontsize=14, transform=plt.gcf().transFigure, fontweight = 'bold');            
 
     if flag_save_plots:
-       plt.savefig(plotdir+'heat_acc_per_forcing'+'.jpeg',dpi=1000, bbox_inches='tight')
+       plt.savefig(plotdir+'heat_acc_per_forcing_franciscostype'+'.jpeg',dpi=1000, bbox_inches='tight')
 
 
 
@@ -228,15 +230,26 @@ def do_plotting(flag_save_plots, flag_save_variables, plotdir,  flag_ref, years_
         years = years_analysis[years_analysis.index(1900):years_analysis.index(2021)]
         
         data = np.stack([lakeheat_climate_anom_ensmean_ts, lakeheat_climate_anom_std_ts],axis=1)
+
+        # due to moving mean, data periods do not completely correspond. Fix this manually
+        data = data[1:-2,:]
+
         # change name!!!!!!
         df = pd.DataFrame(data =data, index = years,columns=['Global mean heat storage [J]','Standard deviation heat storage [J]'] )
         df.to_csv(outdir+'inlandwater_heatuptake_timeseries/heatstorage_natural_lake_1900-2021_movingmean.dat')
 
         data = np.stack([lakeheat_onlyresclimate_anom_ensmean_ts, lakeheat_onlyresclimate_anom_std_ts],axis=1)
+        data = data[1:-2,:]
 
         df = pd.DataFrame(data =data, index = years,columns=['Global mean heat storage [J]','Standard deviation heat storage [J]'] )
         df.to_csv(outdir+'inlandwater_heatuptake_timeseries/heatstorage_reservoir_1900-2021_movingmean.dat')
-        #return (anom_ensmean, anom_ensmin, anom_ensmax, anom_std)
+       
+        data = np.stack([riverheat_anom_ensmean_ts, riverheat_anom_std_ts],axis=1)
+        data = data[1:-2,:]
+
+        df = pd.DataFrame(data =data, index = years,columns=['Global mean heat storage [J]','Standard deviation heat storage [J]'] )
+        df.to_csv(outdir+'inlandwater_heatuptake_timeseries/heatstorage_river_1900-2021_movingmean.dat')
+           #return (anom_ensmean, anom_ensmin, anom_ensmax, anom_std)
     # general plotting settings: 
     xticks = np.array([1900,1920,1940,1960,1980,2000,2021])
     xlims=(1900,2021)
