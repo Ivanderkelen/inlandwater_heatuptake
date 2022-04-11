@@ -16,23 +16,23 @@ def load_lakeheat_albm(outdir,flag_scenario,years_analysis):
     forcings    = ['gfdl-esm2m','hadgem2-es','ipsl-cm5a-lr','miroc5']
 
     # issues are only present for 'climate' and 'both' as they are in the lake temperature profiles
-    if not flag_scenario == 'reservoirs':
+    #if not flag_scenario == 'reservoirs':
 
-        # change the data in these periods to nan
-        for forcing in forcings:
-            lakeheat_forcing = lakeheat_albm['ALBM'][forcing]
+    # change the data in these periods to nan
+    for forcing in forcings:
+        lakeheat_forcing = lakeheat_albm['ALBM'][forcing]
+
+        # 3. miroc5: bad value for year 1997. replace with nan
+        ind_start = years_analysis.index(2006)
+        ind_end = years_analysis.index(2013)
+        lakeheat_forcing[ind_start:ind_end,:,:] = np.nan
+
+        if forcing == 'miroc5':
 
             # 3. miroc5: bad value for year 1997. replace with nan
-            ind_start = years_analysis.index(2006)
-            ind_end = years_analysis.index(2013)
-            lakeheat_forcing[ind_start:ind_end,:,:] = np.nan
-
-            if forcing == 'miroc5':
-
-                # 3. miroc5: bad value for year 1997. replace with nan
-                ind_1996 = years_analysis.index(1996)
-                ind_1997 = years_analysis.index(1998)
-                lakeheat_forcing[ind_1996:ind_1997,:,:] = np.nan
+            ind_1996 = years_analysis.index(1996)
+            ind_1997 = years_analysis.index(1998)
+            lakeheat_forcing[ind_1996:ind_1997,:,:] = np.nan
 
         
         lakeheat_albm['ALBM'][forcing] = lakeheat_forcing
@@ -56,5 +56,9 @@ def cor_for_albm(dict_forcing,model,forcing):
             ind_1996 = years_analysis.index(1996)
             ind_1997 = years_analysis.index(1998)
             dict_forcing[forcing][ind_1996:ind_1997] = np.nan
-      
+
+    if model == 'GOTM' and forcing == 'miroc5':
+
+        dict_forcing[forcing][45:55] = np.nan
+
     return dict_forcing

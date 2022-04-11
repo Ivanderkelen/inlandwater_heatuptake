@@ -11,23 +11,12 @@ import os
 import sys
 import xarray as xr
 # settings for windows or linux machine (for paths)
-if os.name == 'nt': # working on windows
-    sys.path.append(r'E:/scripts/python/utils')
-    sys.path.append(r'E:/scripts/python/calc_lakeheat_isimip/lakeheat_isimip')
-    basepath = 'E:/'
-else:
-    sys.path.append(r'/home/inne/documents/phd/scripts/python/calc_lakeheat_isimip/2020_Vanderkelen_etal_GRL/')
-
-    from cdo import Cdo
-    cdo = Cdo()
 
 
-from cdo import Cdo
-cdo = Cdo()
->>>>>>> refs/remotes/origin/master:main_streamheat.py
 from calc_grid_area   import calc_grid_area
 from dict_functions import *
-
+import warnings
+warnings.filterwarnings("ignore")
 sys.path.append(os.getcwd())
 
 
@@ -39,16 +28,16 @@ flag_preprocess = True
 flag_saveriverheat = True
 flag_saveriverheat_forAmazon = False
 # Reference to which period/year anomalies are calculated
-flag_ref = 'pre-industrial' # 'pre-industrial': first 30 years (1900-1929 for start_year =1900)
+flag_ref = 1960 #'pre-industrial' # 'pre-industrial': first 30 years (1900-1929 for start_year =1900)
 
 
 # -----------------------------------------------------------
 # initialise
 
-basepath = '/home/inne/documents/phd/scripts/python/calc_lakeheat_isimip/2020_Vanderkelen_etal_GRL'
+basepath = os.getcwd()
 
 indir  =  basepath + '/data/ISIMIP/OutputData/water_global'
-outdir =  basepath + '/data/processed/riverheat'
+outdir =  basepath + '/data/processed/riverheat/'
 plotdir=  basepath + '/data/processed/plots/'
 
 
@@ -116,7 +105,7 @@ grid_area      = calc_grid_area(resolution)
 for model in models:
     riverheat_model={} # sub directory for each model
     rivertemp_model={}
-    riverstor_model={}
+    rivermass_model={}
     for ind_forcing,forcing in enumerate(forcings):
 
         # define directory and filename
@@ -229,6 +218,7 @@ if flag_saveriverheat_forAmazon:
 
 # riverheat_ens_spmean = ens_spmean(riverheat)
 
+
 #%%
 # ---------------------------------------------------------------------------
 # Anomaly heat content calculations
@@ -311,6 +301,14 @@ if flag_saveriverheat:
     np.save(outdir+'riverheat_ensmin.npy',riverheat_anom_ensmin_ts) 
     np.save(outdir+'riverheat_ensmax.npy',riverheat_anom_ensmax_ts) 
     np.save(outdir+'riverheat_std.npy', riverheat_anom_std_ts ) 
+
+    # without moving average
+    riverheat_anom_ensmean_ts = ensmean_ts(riverheat_anom)
+    riverheat_anom_std_ts     = ensmax_ts(riverheat_anom)
+
+    np.save(outdir+'riverheat_ts_ensmean.npy', riverheat_anom_ensmean_ts) 
+
+    np.save(outdir+'riverheat_ts_std.npy', riverheat_anom_std_ts ) 
 #%%
 # ---------------------------------------------------------------------------------------
 # Plotting
@@ -519,3 +517,30 @@ plt.savefig(plotdir+figname+'.png')
 
 
 #%%
+#%%
+# ---------------------------------------------------------------------------
+# absolute heat content timeseries calculations
+
+#riverheat_ts = timeseries(riverheat)
+
+if flag_saveriverheat: 
+    riverheat_ensmean_ts = ensmean_ts(riverheat)
+
+    riverheat_std_ts  = ens_std_ts(riverheat)
+
+    np.save(outdir+'riverheat_ts_ensmean.npy', riverheat_ensmean_ts) 
+    np.save(outdir+'riverheat_ts_std.npy', riverheat_std_ts ) 
+
+# ---------------------------------------------------------------------------
+# absolute heat flux timeseries calculations
+
+# river area in m^2 from Allen et al., 2018
+area = 773000000000  
+
+if flag_saveriverheat: 
+    riverheat_ensmean_ts = calc_ensmean_heatflux(riverheat,area,years_analysis)
+
+    riverheat_std_ts  = ens_std_heatflux(riverheat,area,years_analysis)
+
+    np.save(outdir+'riverheat_heatflux_ensmean.npy', riverheat_ensmean_ts) 
+    np.save(outdir+'riverheat_heatflux_std.npy', riverheat_std_ts ) 

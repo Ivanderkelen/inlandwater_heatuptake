@@ -15,9 +15,9 @@ from datetime import datetime
 from sklearn.linear_model import LinearRegression
 import xarray as xr
 
-def get_values(outdir, flag_ref, years_analysis, indir_lakedata, resolution):
+def  get_values(outdir, flag_ref, years_analysis, indir_lakedata, resolution):
 
-    scenarios = 'climate', 'onlyresclimate', 'rivers','total climate change', 'reservoirs'
+    scenarios = 'climate', 'onlyresclimate', 'rivers','total climate change'#, 'reservoirs'
 
     # remove old file
     os.system('rm '+outdir+'lakeheat_values.csv')
@@ -36,9 +36,6 @@ def get_values(outdir, flag_ref, years_analysis, indir_lakedata, resolution):
 
     # river area in m^2 from Allen et al., 2018
     river_area = 773000000000  
-
-    os.system("rm "+outdir+'lakeheat_values.csv')
-
 
     # load values 
     for i,scenario in enumerate(scenarios):
@@ -109,7 +106,7 @@ def get_values(outdir, flag_ref, years_analysis, indir_lakedata, resolution):
         # 2004 - 2014
         if scenario == 'total climate change':
             year_start = 2006
-            year_end = 2020
+            year_end = 2021
             ind_start = years_analysis.index(year_start)
             ind_end = years_analysis.index(year_end)
 
@@ -122,7 +119,7 @@ def get_values(outdir, flag_ref, years_analysis, indir_lakedata, resolution):
                 heat_diff = heat_anom_ensmean_ts[-1]/area - heat_anom_ensmean_ts[ind_start]/area
 
             heat_flux_PG = heat_diff/nsecs
-            print("Inland water heat uptake in "+str(year_start) +'-'+str(year_end)+'is: '+str(heat_flux_PG))
+            print("Inland water heat uptake in "+str(year_start) +'-'+str(year_end)+' is: '+str(heat_flux_PG))
             land_uptake = 0.24 #W/m2
             print("Compared to land uptake: " + str(heat_flux_PG/land_uptake)+"%")
 
