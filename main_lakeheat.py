@@ -194,6 +194,7 @@ else:
 from plotting_lakeheat import * 
 import matplotlib as mpl
 
+
 xticks = np.array([1900,1920,1940,1960,1980,2000,2021])
 
 # calculate anomalies
@@ -221,7 +222,7 @@ cmap = mpl.cm.viridis(np.linspace(0, 1, len(vol_develoment_params)))
 cmap = np.flip(cmap,axis=0)
 
 nplot=0
-f,ax = plt.subplots(3,1, figsize=(6,12))
+f,ax = plt.subplots(2,1, figsize=(6,12))
 x_values = np.asarray(years_analysis)
 
 ax = ax.ravel()
@@ -245,6 +246,7 @@ for model in models:
     #ax[nplot].set_ylim(-0.5e20,1.5e20)
     ax[nplot].set_ylabel('Energy [J]')
     ax[nplot].set_title(model + ' '+forcing, pad=15, loc='right')
+    ax[nplot].grid(visible=None, which='major', axis='both')
     nplot = nplot+1
 
 f.suptitle('Lake heat anomalies sensitivity to volume calculation \n Range for Vd from 0.3 to 1.3', fontsize=16)
@@ -254,5 +256,98 @@ if flag_save_plots:
     plt.savefig(outdir+'plots/sensitivity_volume_'+forcing+'.png',dpi=300)
 
 
+
+# %%
+#%%
+# -------------------------------------------------------------------------
+# PLOT SENSITIVITY STUDY ON LAKE HEAT
+# -------------------------------------------------------------------------
+from plotting_lakeheat import * 
+import matplotlib as mpl
+
+
+
+xticks = np.array([1900,1920,1940,1960,1980,2000,2021])
+
+# calculate anomalies
+lakeheat_anom = {}
+lakeheat_anom_ts = {}
+
+# colors
+
+# extract all colors from the .jet map
+
+for vd in vol_develoment_params: 
+    lakeheat_anom[vd] = calc_anomalies(lakeheat_sensitivity[vd], flag_ref,years_analysis)
+    # Calculate timeseries of lake heat anomaly
+    lakeheat_anom_ts[vd] = timeseries(lakeheat_anom[vd])
+
+lakeheat_anom_cylindrical = calc_anomalies(lakeheat_cylindrical, flag_ref,years_analysis)
+lakeheat_anom_ts_cylindrical = timeseries(lakeheat_anom_cylindrical)
+
+lakeheat_anom_cstVd = calc_anomalies(lakeheat_cstVd, flag_ref,years_analysis)
+lakeheat_anom_ts_cstVd = timeseries(lakeheat_anom_cstVd)
+
+#%%
+
+mpl.rc('axes',edgecolor='k')
+mpl.rc('axes',labelcolor='k')
+mpl.rc('xtick',color='k')
+mpl.rc('xtick',labelsize=18)
+mpl.rc('ytick',color='k')
+mpl.rc('ytick',labelsize=18)
+mpl.rc('axes',titlesize=18)
+mpl.rc('axes',labelsize=22)
+mpl.rc('legend', fontsize='large')
+mpl.rc('text', color='k')
+mpl.rc ('axes', linewidth=3)
+
+
+cmap = mpl.cm.viridis(np.linspace(0, 1, len(vol_develoment_params)))
+cmap = np.flip(cmap,axis=0)
+
+nplot=0
+f,ax = plt.subplots(1,1, figsize=(10,6))
+x_values = np.asarray(years_analysis)
+xticks = np.array([1900,1920,1940,1960,1980,2000,2021])
+
+
+# 4x4 individual forcing plot per model plot 
+for model in [models[1]]:
+        
+
+    forcing = forcings[0]
+
+    line_zero = ax.plot(x_values, np.zeros(np.shape(x_values)), linewidth=0.8,color='darkgray')
+    for n,vd in enumerate(vol_develoment_params):
+        line1 = ax.plot(x_values,lakeheat_anom_ts[vd][model][forcing],color=cmap[n],label=None, alpha=0.5, linewidth=2)
+    
+    line3 = ax.plot(x_values,lakeheat_anom_ts_cylindrical[model][forcing],color='darkorange',label='cylindrical', linewidth=3)
+    line2 = ax.plot(x_values,lakeheat_anom_ts_cstVd[model][forcing],color='mediumvioletred',label='Vd = 1.19', linewidth=3)
+
+    if nplot == 0: 
+        legend = ax.legend(frameon=True,fontsize=16)
+        legend.get_frame().set_facecolor('white')
+        legend.get_frame().set_edgecolor('white')
+
+    ax.set_xlim(1900,2021)
+    ax.set_xticks(ticks=xticks)
+    #ax[nplot].set_ylim(-0.5e20,1.5e20)
+    ax.set_ylabel('Energy [J]')
+    ax.set_xlabel('YEARS CE')
+
+    #ax.set_title(model + ' '+forcing, pad=15, loc='right')
+    ax.grid(which='major', axis='both',color='dimgray')
+    ax2  = f.add_axes([0.14,0.66,0.15,0.05])
+    cbar  = mpl.colorbar.ColorbarBase(ax2,cmap=mpl.cm.viridis_r,orientation='horizontal', ticks=[0,1] )
+    #cbar.ax.set_xlabel('Vd range')
+    cbar.ax.set_xticklabels(['0.3','1.3'])
+    cbar.outline.set_linewidth(1)
+    cbar.set_label(label='Vd range',fontsize=16)
+    #f.suptitle('Lake heat anomalies sensitivity to volume calculation \n Range for Vd from 0.3 to 1.3', fontsize=16)
+f.tight_layout(rect=[0, 0.03, 1, 0.95])
+
+
+plt.savefig(outdir+'plots/sensitivity_volume_'+model+'_'+forcing+'.png',dpi=300)
 
 # %%
