@@ -239,8 +239,9 @@ import pandas as pd
 from dict_functions import *
 
 ind_1960 = years_analysis.index(1960)
-
-
+ind_1900 = years_analysis.index(1900)
+ind_year = ind_1960
+flag_ref = 1960
 # natural lakes, reservoirs and both
 for scenario in ['climate','onlyresclimate','lake_and_reservoir']:
 
@@ -266,6 +267,8 @@ for scenario in ['climate','onlyresclimate','lake_and_reservoir']:
         del lakeheat_anom, lakeheat
         """
         lakeheat_ensmean, lakeheat_std = load_lakeheat_no_movingmean(scenario,outdir,flag_ref, years_analysis)
+   
+   
     if scenario == 'lake_and_reservoir': 
         fn = 'lake_and_reservoir'
     elif scenario == 'onlyresclimate': 
@@ -274,14 +277,16 @@ for scenario in ['climate','onlyresclimate','lake_and_reservoir']:
         fn = 'natural_lake'
 
     data = np.stack([lakeheat_ensmean, lakeheat_std],axis=1)
-    data = data[ind_1960:,:]
-    years = years_analysis[ind_1960:]
+    data = data[ind_year:,:]
+    years = years_analysis[ind_year:]
 
     df = pd.DataFrame(data =data, index = years,columns=['Global mean heat storage [J]','Standard deviation heat storage [J]'] )
         #del lakeheat_anom, lakeheat
 
         #fn = 'inlandwater_'
-    df.to_csv(outdir+'inlandwater_heatuptake_timeseries/heatstorage_'+fn+'.dat')
+    #df.to_csv(outdir+'inlandwater_heatuptake_timeseries/heatstorage_1900-2021_'+fn+'.dat')
+    df.to_csv(outdir+'inlandwater_heatuptake_timeseries/heatstorage_1960ref_'+fn+'.dat')
+
     #return (anom_ensmean, anom_ensmin, anom_ensmax, anom_std)
 
 # river heat
@@ -289,8 +294,8 @@ riverheat_ensmean = np.load(outdir+'riverheat/riverheat_ts_ensmean.npy',allow_pi
 riverheat_std = np.load(outdir+'riverheat/riverheat_ts_std.npy',allow_pickle='TRUE')
 
 data = np.stack([riverheat_ensmean, riverheat_std],axis=1)
-data = data[ind_1960:,:]
-years = years_analysis[ind_1960:]
+data = data[ind_year:,:]
+years = years_analysis[ind_year:]
 
 df = pd.DataFrame(data =data, index = years,columns=['Global mean heat storage [J]','Standard deviation heat storage [J]'] )
     #del lakeheat_anom, lakeheat
@@ -298,7 +303,8 @@ df = pd.DataFrame(data =data, index = years,columns=['Global mean heat storage [
 fn = 'river'
 
     #fn = 'inlandwater_'
-df.to_csv(outdir+'inlandwater_heatuptake_timeseries/heatstorage_'+fn+'.dat')
+#df.to_csv(outdir+'inlandwater_heatuptake_timeseries/heatstorage_1900-2021_'+fn+'.dat')
+df.to_csv(outdir+'inlandwater_heatuptake_timeseries/heatstorage_1960ref_'+fn+'.dat')
 
 
 #%% 
@@ -312,7 +318,8 @@ lake_area    = np.load(indir_lakedata+'lake_area.npy')
 lake_area_ts = np.sum(lake_area, axis=(1,2))
 res_area_ts = lake_area_ts - lake_area_ts[0]
 
-
+ind_1900 = years_analysis.index(1900)
+ind_year = ind_1900
 
 for scenario in ['climate','onlyresclimate','lake_and_reservoir']:
 
@@ -326,11 +333,31 @@ for scenario in ['climate','onlyresclimate','lake_and_reservoir']:
 
     lakeheat= np.load(outdir+'lakeheat_'+scenario+'.npy',allow_pickle='TRUE').item()
 
-
     if scenario =='climate':
         lakeheat_albm = load_lakeheat_albm(outdir,scenario,years_analysis)
         lakeheat.update(lakeheat_albm)
         del lakeheat_albm
+
+    if scenario == 'lake_and_reservoir':
+        #(lakeheat_ensmean, lakeheat_std) = calc_ensmean_std_lakes_and_reservoirs_heatuptake(outdir,flag_ref, years_analysis)
+        lakeheat_climate = np.load(outdir+'lakeheat_'+'climate'+'.npy',allow_pickle='TRUE').item()
+        lakeheat_albm = load_lakeheat_albm(outdir,'climate',years_analysis)
+        lakeheat_climate.update(lakeheat_albm)
+        del lakeheat_albm
+
+        lakeheat_reservoir =  np.load(outdir+'lakeheat_'+'onlyresclimate'+'.npy',allow_pickle='TRUE').item() 
+        
+        # adding the values with common key
+        lakeheat = {}
+        for key in lakeheat_climate:
+            if key in lakeheat_reservoir:
+                temp = {}
+                for key2 in lakeheat_climate[key]:
+                    temp[key2] = lakeheat_climate[key][key2] + lakeheat_reservoir[key][key2]
+                lakeheat[key] = temp
+            else: 
+                 lakeheat[key] = lakeheat_climate[key]
+        #lakeheat = lakeheat_climate + lakeheat_reservoir
 
     #calculate ensemble mean heat flux
     heatflux_ensmean = calc_ensmean_heatflux(lakeheat,area,years_analysis)    
@@ -339,8 +366,8 @@ for scenario in ['climate','onlyresclimate','lake_and_reservoir']:
     heatflux_std = ens_std_heatflux(lakeheat,area,years_analysis)
 
     data = np.stack([heatflux_ensmean, heatflux_std],axis=1)
-    data = data[ind_1960:,:]
-    years = years_analysis[ind_1960:-1]
+    data = data[ind_year:,:]
+    years = years_analysis[ind_year:-1]
     df = pd.DataFrame(data =data, index = years,columns=['Global mean annual heat flux [W/m²]','Standard deviation annual heat flux [W/m²]'] )
     
     if scenario == 'lake_and_reservoir': 
@@ -351,7 +378,7 @@ for scenario in ['climate','onlyresclimate','lake_and_reservoir']:
         fn = 'natural_lake'
 
         #fn = 'inlandwater_'
-    df.to_csv(outdir+'inlandwater_heatuptake_timeseries/heatflux_'+fn+'.dat')
+    df.to_csv(outdir+'inlandwater_heatuptake_timeseries/heatflux_1900-2021_'+fn+'.dat')
 
 
 
@@ -360,8 +387,8 @@ riverheat_heatflux_ensmean = np.load(outdir+'riverheat/riverheat_heatflux_ensmea
 riverheat_heatflux_std = np.load(outdir+'riverheat/riverheat_heatflux_std.npy',allow_pickle='TRUE')
 
 data = np.stack([riverheat_heatflux_ensmean, riverheat_heatflux_std],axis=1)
-data = data[ind_1960:,:]
-years = years_analysis[ind_1960:-1]
+data = data[ind_year:,:]
+years = years_analysis[ind_year:-1]
 
 df = pd.DataFrame(data =data, index = years,columns=['Global mean annual heat flux [W/m²]','Standard deviation annual heat flux [W/m²]'] )
     #del lakeheat_anom, lakeheat
@@ -369,7 +396,147 @@ df = pd.DataFrame(data =data, index = years,columns=['Global mean annual heat fl
 fn = 'river'
 
     #fn = 'inlandwater_'
-df.to_csv(outdir+'inlandwater_heatuptake_timeseries/heatflux_'+fn+'.dat')
+df.to_csv(outdir+'inlandwater_heatuptake_timeseries/heatflux_1900-2021_'+fn+'.dat')
+
+
+#%%
+# -------------------------------------------------------------------------
+# SAVE global mean per area HEAT CONTENT timeseries for lakes and reservoirs! 
+# -------------------------------------------------------------------------
+ind_year = ind_1960
+flag_ref = 1960
+
+# get lake area and calculate reservoir area
+lake_area    = np.load(indir_lakedata+'lake_area.npy')
+lake_area_ts = np.sum(lake_area, axis=(1,2))
+
+# natural lakes, reservoirs and both
+scenario = 'lake_and_reservoir'
+
+area = lake_area_ts #[:-1]
+
+lakeheat_ensmean_climate, lakeheat_std_climate = load_lakeheat_no_movingmean('climate',outdir,flag_ref, years_analysis)
+lakeheat_ensmean_onlyresclimate, lakeheat_std_onlyresclimate = load_lakeheat_no_movingmean('onlyresclimate',outdir,flag_ref, years_analysis)
+lakeheat_ensmean = lakeheat_ensmean_climate + lakeheat_ensmean_onlyresclimate
+lakeheat_std = lakeheat_std_onlyresclimate + lakeheat_std_climate
+
+lakeheat_ensmean_perarea = lakeheat_ensmean/area
+lakeheat_std_perarea = lakeheat_std/area
+
+fn = 'lake_and_reservoir'
+
+data = np.stack([lakeheat_ensmean_perarea, lakeheat_std_perarea],axis=1)
+data = data[ind_year:,:]
+years = years_analysis[ind_year:]
+
+df = pd.DataFrame(data =data, index = years,columns=['Global mean heat storage per area [J/m2]','Standard deviation heat storage [J/m2]'] )
+    #del lakeheat_anom, lakeheat
+
+    #fn = 'inlandwater_'
+#df.to_csv(outdir+'inlandwater_heatuptake_timeseries/heatstorage_perarea_1900-2021_'+fn+'.dat')
+df.to_csv(outdir+'inlandwater_heatuptake_timeseries/heatstorage_perarea_1960ref_'+fn+'.dat')
+
+#return (anom_ensmean, anom_ensmin, anom_ensmax, anom_std)
+
+#%% 
+# -------------------------------------------------------------------------
+# SAVE global mean annual HEAT MAP 
+#  -------------------------------------------------------------------------
+from datetime import date
+# load example netcdf file
+# add today (for saving to netCDF later)
+today = date.today()
+date = today.strftime("%c")
+
+# year to calculate heat uptake for
+year = 2021
+
+# get lake area and calculate reservoir area
+lake_area    = np.load(indir_lakedata+'lake_area.npy')
+
+ind_year = years_analysis.index(year)
+
+# natural lakes, reservoirs and both
+fn = 'lake_and_reservoir'
+
+lakeheat_climate = np.load(outdir+'lakeheat_'+'climate'+'.npy',allow_pickle='TRUE').item()
+lakeheat_albm = load_lakeheat_albm(outdir,'climate',years_analysis)
+lakeheat_climate.update(lakeheat_albm)
+del lakeheat_albm
+
+lakeheat_reservoir =  np.load(outdir+'lakeheat_'+'onlyresclimate'+'.npy',allow_pickle='TRUE').item() 
+
+# adding the values with common key
+lakeheat = {}
+for key in lakeheat_climate:
+    if key in lakeheat_reservoir:
+        temp = {}
+        for key2 in lakeheat_climate[key]:
+            temp[key2] = lakeheat_climate[key][key2] + lakeheat_reservoir[key][key2]
+        lakeheat[key] = temp
+    else: 
+        lakeheat[key] = lakeheat_climate[key]
+
+
+# calculate timeseries maps of mean of all models and forcings 
+lakeheat_ensmean = ens_spmean_ensmean(lakeheat) # output np array (time,lat,lon)
+
+lakeheat_pi = np.nanmean(lakeheat_ensmean[0:30,:,:],axis=0)
+lakeheat_pres = lakeheat_ensmean[ind_year,:,:]
+
+lakeheat_anom_spmean = lakeheat_pres -lakeheat_pi
+
+#lakeheat_anom = calc_anomalies(lakeheat, flag_ref, years_analysis)
+
+#lakeheat_anom_ensmean = ens_spmean_ensmean(lakeheat_anom)    
+
+# select year to save into netcdf and calculate per area
+lakeheat_anom_ensmean_year_perarea = lakeheat_anom_spmean / lake_area[ind_year,:,:]
+
+## write NETCDF file
+filename_netcdf = outdir+'inlandwater_heatuptake_timeseries/heatstorage_map_'+str(year)+'_'+fn+'.nc'
+# attributes
+
+variable_name = 'heatstorage'
+values = lakeheat_anom_ensmean_year_perarea
+# variable attributes
+attrs_variable = {'units': 'J/m2', 'long_name' : 'Lake and reservoir heat storage for '+str(year)+' compared to 1900-1929 mean'}
+
+# global attributes
+attrs_global = {'creation_date': date,
+                        'title': 'Inland water heat storage',
+                        'contact' : 'Inne Vanderkelen - VUB (inne.vanderkelen@vub.be)'}
+
+# writing
+
+resolution = 0.5
+lons= np.arange(-180+resolution/2,180+resolution/2,resolution)
+lats= np.arange(-90+resolution/2,90+resolution/2,resolution)
+
+lon_da = xr.DataArray(lons, 
+                        coords = {'lon':lons}, 
+                        dims='lon', 
+                        attrs={'units':'degrees_east', 'axis':"X"})
+
+lat_da = xr.DataArray(lats,
+                        coords = {'lat':lats}, 
+                        dims='lat', 
+                        attrs={'units':'degrees_north', 'axis':"X"})
+
+
+values_da = xr.DataArray(values, 
+                        coords = {'lon':lons,'lat':lats},
+                        dims=('lat','lon'),
+                        attrs = attrs_variable)
+
+
+ds = xr.Dataset(data_vars={ 'lon' : lon_da,   
+                            'lat' : lat_da,
+                            variable_name : values_da},
+                            attrs=attrs_global)
+                            
+ds.to_netcdf(filename_netcdf, format='NETCDF4_CLASSIC',mode='w')
+
 
 
 #%%
@@ -412,11 +579,13 @@ if flag_plotting_input_maps: # plotting of lake/reservoir area fraction and lake
 filenames = ['river','lake_and_reservoir','reservoir','natural_lake']
 
 
-
-
 for fn in filenames:     
-    plot_heatstorage_ts(fn,flag_ref,end_year) 
-    plot_heatflux_ts(fn,flag_ref,end_year) 
-  
+    plot_heatstorage_ts(fn,1900,end_year,outdir)
+    plot_heatflux_ts(fn,1900,end_year,outdir) 
+    
+plot_heatstorage_ts_perarea('lake_and_reservoir',1900,end_year,outdir)
+
+# %%
+plot_heatflux_ts('lake_and_reservoir',1900,end_year,outdir) 
 
 # %%
