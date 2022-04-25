@@ -19,6 +19,7 @@ import os
 from osgeo import gdal
 from load_lakeheat_albm import  *
 from datetime import timedelta
+import matplotlib.pyplot as plt
 
 # ------------------------------------------------------------------------
 # Data Agggregation functions
@@ -787,9 +788,9 @@ def ens_std_heatflux(indict,area,years_analysis):
 
 
     
-def plot_heatstorage_ts(fn,start_year,end_year):
+def plot_heatstorage_ts(fn,start_year,end_year,outdir):
     
-    da = pd.read_csv(outdir+'inlandwater_heatuptake_timeseries/heatstorage_'+fn+'.dat')
+    da = pd.read_csv(outdir+'inlandwater_heatuptake_timeseries/heatstorage_1900-2021_'+fn+'.dat')
 
     da = da.set_index('Unnamed: 0')
     fig,ax = plt.subplots()
@@ -804,9 +805,9 @@ def plot_heatstorage_ts(fn,start_year,end_year):
 
 
 
-def plot_heatflux_ts(fn,start_year,end_year):
+def plot_heatflux_ts(fn,start_year,end_year,outdir):
     
-    da = pd.read_csv(outdir+'inlandwater_heatuptake_timeseries/heatflux_'+fn+'.dat')
+    da = pd.read_csv(outdir+'inlandwater_heatuptake_timeseries/heatflux_1900-2021_'+fn+'.dat')
 
     da = da.set_index('Unnamed: 0')
     fig,ax = plt.subplots()
@@ -819,3 +820,17 @@ def plot_heatflux_ts(fn,start_year,end_year):
     ax.set_xlim(start_year,end_year-1)
     ax.set_title('heat flux '+fn+' W/m²')
 
+def plot_heatstorage_ts_perarea(fn,start_year,end_year,outdir):
+    
+    da = pd.read_csv(outdir+'inlandwater_heatuptake_timeseries/heatstorage_1900-2021_perarea_'+fn+'.dat')
+
+    da = da.set_index('Unnamed: 0')
+    fig,ax = plt.subplots()
+
+
+    under_2std = da['Global mean heat storage per area [J/m2]'] - da['Standard deviation heat storage [J/m2]']
+    upper_2std = da['Global mean heat storage per area [J/m2]'] + da['Standard deviation heat storage [J/m2]']
+    da['Global mean heat storage per area [J/m2]'].plot(ax=ax)
+    ax.fill_between(np.arange(start_year,end_year,1),under_2std,upper_2std, color='sandybrown',alpha=0.5)
+    ax.set_xlim(start_year,end_year)
+    ax.set_title('heat storage '+fn+' J/m2')

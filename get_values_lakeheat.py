@@ -71,8 +71,8 @@ def  get_values(outdir, flag_ref, years_analysis, indir_lakedata, resolution):
         #print(np.mean(heat_anom_ensmean_ts))
         #print(heat_anom_ensmean_ts.size)
 
-        total_heatcontent_increase = np.mean(heat_anom_ensmean_ts[-years_increase:-1])
-        total_heatcontent_std      = np.mean(heat_anom_std_ts[-years_increase:-1])
+        total_heatcontent_increase = np.mean(heat_anom_ensmean_ts[-(years_increase+1):-2])
+        total_heatcontent_std      = np.mean(heat_anom_std_ts[-(years_increase+1):-1])
 
         # heat flux over whole period
         # 100 is # years between 1915 and 2015, the middle period in which is calculated
