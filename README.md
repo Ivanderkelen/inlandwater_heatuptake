@@ -1,5 +1,5 @@
 # 2019_Vanderkelen_et_al_GRL
-Data processing and analysis used in Vanderkelen et al., 2020.
+Update of data processing and analysis used in Vanderkelen et al., 2020, including the model GOTM for publication in Cuesto-Valero et al., 2023. 
 
 
 ## For users
@@ -10,7 +10,8 @@ The HYDROLAKES and GRanD data is processed using the tool [polygon_to_cellareafr
 The data analysis and plotting is done with python, checkout the [main](main_lakeheat.py) script for an overview. 
 
 ## Versions
-Version 0.1.0 - March 2020  
+Version 0.1.0 - March 2020
+Version 0.2.0 - March 2022  
 
 ## License
 This project is licensed under the MIT License. See also the 
