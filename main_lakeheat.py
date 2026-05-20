@@ -1,10 +1,10 @@
 """
 Author      : Inne Vanderkelen (inne.vanderkelen@vub.be)
 Institution : Vrije Universiteit Brussel (VUB)
-Date        : March 2022
+Date        : May 2026
 
 Main script for heat calculation and plotting
-Update for land heat inventory analysis. 
+Update for land heat inventory analysis 2026
 
 """
 
@@ -565,7 +565,7 @@ attrs_variable = {'units': 'J/m2', 'long_name' : 'Lake and reservoir heat storag
 # global attributes
 attrs_global = {'creation_date': date,
                         'title': 'Inland water heat storage',
-                        'contact' : 'Inne Vanderkelen - VUB (inne.vanderkelen@vub.be)'}
+                        'contact' : 'Inne Vanderkelen - KU Leuven (inne.vanderkelen@kuleuven.be)'}
 
 # writing
 
