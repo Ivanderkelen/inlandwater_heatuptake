@@ -5,3 +5,4 @@ ignore/
 extract_from_hydrolakes.py
 data/
 
+lake_area.npy
