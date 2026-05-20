@@ -241,7 +241,7 @@ from dict_functions import *
 year = 1900
 ind_year = years_analysis.index(year)
 
-end_year = 2020
+end_year = 2025
 ind_endyear = years_analysis.index(end_year) +1
 
 years_filename= str(year)+'-'+str(end_year)
