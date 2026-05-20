@@ -790,7 +790,9 @@ def ens_std_heatflux(indict,area,years_analysis):
     
 def plot_heatstorage_ts(fn,start_year,end_year,outdir):
     
-    da = pd.read_csv(outdir+'inlandwater_heatuptake_timeseries/heatstorage_1900-2021_'+fn+'.dat')
+    years_filename= str(start_year)+'-'+str(end_year)
+
+    da = pd.read_csv(outdir+'inlandwater_heatuptake_timeseries/heatstorage_'+years_filename+'_'+fn+'.dat')
 
     da = da.set_index('Unnamed: 0')
     fig,ax = plt.subplots()
@@ -799,7 +801,7 @@ def plot_heatstorage_ts(fn,start_year,end_year,outdir):
     under_2std = da['Global mean heat storage [J]'] - da['Standard deviation heat storage [J]']
     upper_2std = da['Global mean heat storage [J]'] + da['Standard deviation heat storage [J]']
     da['Global mean heat storage [J]'].plot(ax=ax)
-    ax.fill_between(np.arange(start_year,end_year,1),under_2std,upper_2std, color='sandybrown',alpha=0.5)
+    ax.fill_between(da.index.values,under_2std,upper_2std, color='sandybrown',alpha=0.5)
     ax.set_xlim(start_year,end_year)
     ax.set_title('heat storage '+fn+' J')
 
@@ -807,7 +809,10 @@ def plot_heatstorage_ts(fn,start_year,end_year,outdir):
 
 def plot_heatflux_ts(fn,start_year,end_year,outdir):
     
-    da = pd.read_csv(outdir+'inlandwater_heatuptake_timeseries/heatflux_1900-2021_'+fn+'.dat')
+    years_filename= str(start_year)+'-'+str(end_year)
+    print(years_filename)
+
+    da = pd.read_csv(outdir+'inlandwater_heatuptake_timeseries/heatflux_'+years_filename+'_'+fn+'.dat')
 
     da = da.set_index('Unnamed: 0')
     fig,ax = plt.subplots()
@@ -816,13 +821,34 @@ def plot_heatflux_ts(fn,start_year,end_year,outdir):
     under_2std = da['Global mean annual heat flux [W/m²]'] - da['Standard deviation annual heat flux [W/m²]']
     upper_2std = da['Global mean annual heat flux [W/m²]'] + da['Standard deviation annual heat flux [W/m²]']
     da['Global mean annual heat flux [W/m²]'].plot(ax=ax)
-    ax.fill_between(np.arange(start_year,end_year-1,1),under_2std,upper_2std, color='sandybrown',alpha=0.5)
-    ax.set_xlim(start_year,end_year-1)
+    ax.fill_between(da.index.values,under_2std,upper_2std, color='sandybrown',alpha=0.5)
+    ax.set_xlim(da.index.values[0],da.index.values[-1])
+    ax.set_title('heat flux '+fn+' W/m²')
+
+def plot_heatflux_ts_movingmean(fn,start_year,end_year,outdir):
+    
+    years_filename= str(start_year)+'-'+str(end_year)
+
+
+    da = pd.read_csv(outdir+'inlandwater_heatuptake_timeseries/heatflux_'+years_filename+'_'+fn+'.dat')
+
+    da = da.set_index('Unnamed: 0')
+    fig,ax = plt.subplots()
+
+    da_movingmean = moving_average(da['Global mean annual heat flux [W/m²]'].values)
+    ax.plot(da_movingmean )
+    under_2std = moving_average(da['Global mean annual heat flux [W/m²]'].values) - moving_average(da['Standard deviation annual heat flux [W/m²]'].values)
+    upper_2std = moving_average(da['Global mean annual heat flux [W/m²]'].values) + moving_average(da['Standard deviation annual heat flux [W/m²]'].values)
+    #ax.fill_between(moving_average(np.arange(start_year,end_year-1,1)),under_2std,upper_2std, color='sandybrown',alpha=0.5)
+    #ax.set_xlim(start_year,end_year-1)
     ax.set_title('heat flux '+fn+' W/m²')
 
 def plot_heatstorage_ts_perarea(fn,start_year,end_year,outdir):
     
-    da = pd.read_csv(outdir+'inlandwater_heatuptake_timeseries/heatstorage_1900-2021_perarea_'+fn+'.dat')
+    years_filename= str(start_year)+'-'+str(end_year)
+
+
+    da = pd.read_csv(outdir+'inlandwater_heatuptake_timeseries/heatstorage_perarea_'+years_filename+'_'+fn+'.dat')
 
     da = da.set_index('Unnamed: 0')
     fig,ax = plt.subplots()
@@ -831,6 +857,6 @@ def plot_heatstorage_ts_perarea(fn,start_year,end_year,outdir):
     under_2std = da['Global mean heat storage per area [J/m2]'] - da['Standard deviation heat storage [J/m2]']
     upper_2std = da['Global mean heat storage per area [J/m2]'] + da['Standard deviation heat storage [J/m2]']
     da['Global mean heat storage per area [J/m2]'].plot(ax=ax)
-    ax.fill_between(np.arange(start_year,end_year,1),under_2std,upper_2std, color='sandybrown',alpha=0.5)
+    ax.fill_between(da.index.values,under_2std,upper_2std, color='sandybrown',alpha=0.5)
     ax.set_xlim(start_year,end_year)
     ax.set_title('heat storage '+fn+' J/m2')
