@@ -61,7 +61,7 @@ def ensmean_ts_per_model(indict):
     for k in indict: 
         for f in indict[k]:
             tempdict[f] = np.nansum(indict[k][f],axis=(1,2))
-        stacked = np.stack(tempdict.values())
+        stacked = np.stack(list(tempdict.values()))
         outdict[k] = np.nanmean(stacked,axis=0)
     return outdict
 
@@ -76,10 +76,11 @@ def ensmean_ts(indict):
             tempdict[f] = np.nansum(indict[k][f],axis=(1,2))
             tempdict = cor_for_albm(tempdict,k,f)
             tempdict2[f] = np.where(tempdict==0,np.nan,tempdict[f])
-        stacked = np.stack(tempdict2.values())
+        #stacked = np.stack(tempdict2.values())
+        stacked = np.stack(list(tempdict2.values()))
         ens_summed[k] = np.nanmean(stacked,axis=0)
 
-    stacked_per_model = np.stack(ens_summed.values())
+    stacked_per_model = np.stack(list(ens_summed.values()))
     ensmean_allmodels = np.nanmean(stacked_per_model,axis=0)
     return ensmean_allmodels
 
@@ -117,7 +118,7 @@ def ens_std_ts(indict):
             tempdict[f] = np.nansum(indict[k][f],axis=(1,2))
             tempdict = cor_for_albm(tempdict,k,f)
             tempdict2[f] = np.where(tempdict==0,np.nan,tempdict[f])
-        stacked = np.stack(tempdict.values())
+        stacked = np.stack(list(tempdict.values()))
         # put all forcings of models together. 
         if concat_stacked.size == 0:
             concat_stacked = stacked
@@ -137,7 +138,7 @@ def ensmin_ts_per_model(indict):
         tempdict = {}
         for f in indict[k]:
             tempdict[f] = np.nansum(indict[k][f],axis=(1,2))
-        stacked = np.stack(tempdict.values())
+        stacked = np.stack(list(tempdict.values()))
         outdict[k] = np.nanmin(stacked,axis=0)
     return outdict
 
@@ -150,7 +151,7 @@ def ensmin_ts(indict):
         for f in indict[k]:
             tempdict[f] = np.nansum(indict[k][f],axis=(1,2))
             tempdict = cor_for_albm(tempdict,k,f)
-        stacked = np.stack(tempdict.values())
+        stacked = np.stack(list(tempdict.values()))
         ens_summed[k] = np.nanmin(stacked,axis=0)
 
     stacked_per_model = np.stack(ens_summed.values())
@@ -165,7 +166,7 @@ def ensmax_ts_per_model(indict):
         for f in indict[k]:
             tempdict[f] = np.nansum(indict[k][f],axis=(1,2))
             tempdict = cor_for_albm(tempdict,k,f)
-        stacked = np.stack(tempdict.values())
+        stacked = np.stack(list(tempdict.values()))
         outdict[k] = np.nanmax(stacked,axis=0)
     return outdict
 
@@ -179,7 +180,7 @@ def ensmax_ts(indict):
             tempdict[f] = np.nansum(indict[k][f],axis=(1,2))
             tempdict = cor_for_albm(tempdict,k,f)
 
-        stacked = np.stack(tempdict.values())
+        stacked = np.stack(list(tempdict.values()))
         ens_summed[k] = np.nanmax(stacked,axis=0)
 
     stacked_per_model = np.stack(ens_summed.values())
@@ -203,11 +204,11 @@ def ens_spmean_ensmean(indict):
 # output: np array of (timestep,lon,lat)
     ensmean_per_model = {}
     for k in indict: 
-        stacked = np.stack(indict[k].values())
+        stacked = np.stack(list(indict[k].values()))
         ensmean = np.nanmean(stacked,axis=0)
         ensmean_per_model[k] = ensmean
     
-    stacked_per_model = np.stack(ensmean_per_model.values())
+    stacked_per_model = np.stack(list(ensmean_per_model.values()))
     ensmean_allmodels = np.nanmean(stacked_per_model,axis=0)
 
     return ensmean_allmodels
@@ -218,11 +219,11 @@ def ens_spmean_ensmean2(indict):
 # output: np array of (timestep,lon,lat)
     ensmean_per_model = {}
     for k in indict: 
-        stacked = np.stack(indict[k].values())
+        stacked = np.stack(list(indict[k].values()))
         ensmean = np.nanmean(stacked,axis=0)
         ensmean_per_model[k] = ensmean
     
-    stacked_per_model = np.stack(ensmean_per_model.values())
+    stacked_per_model = np.stack(list(ensmean_per_model.values()))
     ensmean_allmodels = np.nanmean(stacked_per_model,axis=0)
 
     return ensmean_allmodels
@@ -233,7 +234,7 @@ def ensmean_spcumsum(indict):
     # calculate ensemble mean an acumulates spatially (returns lon lat field)
     outdict = {}
     for k in indict: 
-        stacked = np.stack(indict[k].values())
+        stacked = np.stack(list(indict[k].values()))
         ensemblemean = np.nanmean(stacked,axis=0)
         outdict[k] = np.cumsum(ensemblemean,axis=0)
     return outdict
@@ -615,10 +616,10 @@ def calc_reservoir_warming(outdir,years_analysis):
 def load_lakeheat_no_movingmean(scenario,outdir,flag_ref, years_analysis):
     lakeheat= np.load(outdir+'lakeheat_'+scenario+'.npy',allow_pickle='TRUE').item()
     
-    if not scenario =='onlyresclimate':
-        lakeheat_albm = load_lakeheat_albm(outdir,scenario,years_analysis)
-        lakeheat.update(lakeheat_albm)
-        del lakeheat_albm
+    #if not scenario =='onlyresclimate':
+       # lakeheat_albm = load_lakeheat_albm(outdir,scenario,years_analysis)
+       # lakeheat.update(lakeheat_albm)
+       # del lakeheat_albm
 
     lakeheat_anom = calc_anomalies(lakeheat, flag_ref, years_analysis)
 
@@ -731,7 +732,7 @@ def calc_ensmean_heatflux(indict,area,years_analysis):
     nsecs = np.empty_like(years_analysis)
     for t,year in enumerate(years_analysis):
         nsecs[t] = timedelta(days=pd.Timestamp(year, 12, 31).dayofyear).total_seconds()
-    nsecs = nsecs[:-1]
+    #nsecs = nsecs[:-1]
 
     # function starts here/ 
     ens_summed = {}
@@ -740,15 +741,16 @@ def calc_ensmean_heatflux(indict,area,years_analysis):
         tempdict2 = {}
         fluxdict = {}
         for f in indict[k]:
+            print(f, k)
             tempdict[f] = np.diff(indict[k][f],axis=0)
             tempdict2[f] = np.nansum(tempdict[f],axis=(1,2))/(nsecs*area)
             tempdict2 = cor_for_albm(tempdict2,k,f)
             fluxdict[f] = np.where(tempdict2==0,np.nan,tempdict2[f])
 
-        stacked = np.stack(fluxdict.values())
+        stacked = np.stack(list(fluxdict.values()))
         ens_summed[k] = np.nanmean(stacked,axis=0)
 
-    stacked_per_model = np.stack(ens_summed.values())
+    stacked_per_model = np.stack(list(ens_summed.values()))
     ensmean_allmodels = np.nanmean(stacked_per_model,axis=0)
     return ensmean_allmodels
 
@@ -762,7 +764,7 @@ def ens_std_heatflux(indict,area,years_analysis):
     nsecs = np.empty_like(years_analysis)
     for t,year in enumerate(years_analysis):
         nsecs[t] = timedelta(days=pd.Timestamp(year, 12, 31).dayofyear).total_seconds()
-    nsecs = nsecs[:-1]
+    #nsecs = nsecs[:-1]
 
     # calculate standard deviation of timeseries
     concat_stacked = np.array([])
@@ -775,7 +777,7 @@ def ens_std_heatflux(indict,area,years_analysis):
             tempdict2[f] = np.nansum(tempdict[f],axis=(1,2))/(nsecs*area)
             tempdict2 = cor_for_albm(tempdict2,k,f)
             fluxdict[f] = np.where(tempdict2==0,np.nan,tempdict2[f])
-        stacked = np.stack(fluxdict.values())
+        stacked = np.stack(list(fluxdict.values()))
         # put all forcings of models together. 
         if concat_stacked.size == 0:
             concat_stacked = stacked
